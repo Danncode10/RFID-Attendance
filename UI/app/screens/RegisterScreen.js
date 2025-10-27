@@ -5,6 +5,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -100,38 +103,46 @@ export default function RegisterScreen({ navigation, route }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>📘 Student Registration</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <Text style={styles.title}>📘 Student Registration</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Student ID (e.g. 231-1234)"
-        value={studentId}
-        onChangeText={setStudentId}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Course & Year (e.g. BSCS 3B)"
-        value={courseYear}
-        onChangeText={setCourseYear}
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Student ID (e.g. 231-1234)"
+            value={studentId}
+            onChangeText={setStudentId}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Course & Year (e.g. BSCS 3B)"
+            value={courseYear}
+            onChangeText={setCourseYear}
+          />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleRegister}>
+            <Text style={styles.buttonText}>Register</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
-        onPress={() => navigation.navigate("ViewStudents", { students })}
-      >
-        <Text style={styles.buttonText}>View Registered Students</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
+            onPress={() => navigation.navigate("ViewStudents", { students })}
+          >
+            <Text style={styles.buttonText}>View Registered Students</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
