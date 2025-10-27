@@ -48,7 +48,51 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 
 ---
 
-### *Step 1: Hardware Setup*
+### *Step 1: UI Development and Design*
+
+*Goal:* Develop the mobile app interface for student council members to manage events, register students, and monitor attendance.
+
+*Tasks & Details:*
+
+1. Set up React Native project with necessary dependencies for navigation and API integration.
+2. Design screens: Event Management, Student Registration, Attendance Logs, Scanner Connection.
+3. Implement UI components for creating events, viewing students, logging attendance.
+4. Connect to ESP32 hotspot and FastAPI server via API calls.
+5. Add UI prompts for registering new RFID scans detected by the hardware.
+
+*Why it matters:*
+
+* Provides the user interface for interaction before hardware integration.
+* Ensures the app handles registration and management workflows.
+
+---
+
+### *Step 2: FastAPI Backend Setup*
+
+*Goal:* Set up the FastAPI server to handle database operations and API requests from both UI and hardware.
+
+*Tasks & Details:*
+
+1. Set up a Python virtual environment and install FastAPI, Uvicorn, SqlAlchemy, SQLite.
+2. Define API endpoints:
+
+   * POST /scan: Receive UID from ESP32, check if student exists, log attendance if yes, return new_student if no.
+   * POST /register: Register new student with name/grade from UI.
+   * GET /students: Retrieve student list for UI.
+   * POST /events: Create/manage events.
+   * GET /attendance: View attendance logs.
+
+3. Initialize SQLite database with schema from Database/schema.sql.
+4. Secure API with basic auth or API keys if needed.
+5. Run FastAPI server for testing with UI.
+
+*Why it matters:*
+
+* Backend is developed early to support UI functionality.
+
+---
+
+### *Step 3: Hardware Setup*
 
 *Goal:* Prepare the ESP32 and RC522 module for scanning RFID tags and provide feedback.
 
@@ -78,7 +122,7 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 
 ---
 
-### *Step 2: ESP32 Hotspot Setup*
+### *Step 4: ESP32 Hotspot Setup*
 
 *Goal:* Make the ESP32 act as a Wi-Fi hotspot so the student council app or device can connect to it directly.
 
@@ -86,12 +130,12 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 
 1. Use the WiFi.h library to configure an *access point (AP mode)*:
 
-   
+
    WiFi.softAP("EventScanner_01", "password123");
    IPAddress IP = WiFi.softAPIP();
    Serial.print("AP IP address: ");
    Serial.println(IP);
-   
+
 2. Set SSID and password for security.
 3. Test the hotspot using a mobile device or laptop to ensure it is visible and connectable.
 
@@ -102,7 +146,7 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 
 ---
 
-### *Step 3: RFID Reading Logic*
+### *Step 5: RFID Reading Logic*
 
 *Goal:* Detect and read RFID cards, determine if they are new, and prepare data for the database.
 
@@ -129,33 +173,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 4: FastAPI Backend Development*
-
-*Goal:* Develop the FastAPI server to handle API requests from ESP32 and UI, managing the SQLite database.
-
-*Tasks & Details:*
-
-1. Set up a Python virtual environment and install dependencies: FastAPI, Uvicorn, SqlAlchemy, SQLite.
-2. Define API endpoints:
-
-   * POST /scan: Receive UID from ESP32, check if student exists, log attendance if yes, return new_student if no.
-   * POST /register: Register new student with name/grade from UI.
-   * GET /students: Retrieve student list for UI.
-   * POST /events: Create/manage events.
-   * GET /attendance: View attendance logs.
-
-3. Initialize SQLite database with schema from Database/schema.sql.
-4. Secure API with basic auth or API keys if needed.
-5. Run FastAPI server on the server device, accessible via HTTP over the ESP32 hotspot.
-
-*Why it matters:*
-
-* FastAPI provides a clean REST API for decoupling ESP32 firmware from database logic.
-* Enables centralized data management and easier integration with UI.
-
----
-
-### *Step 5: ESP32 API Integration*
+### *Step 6: ESP32 API Integration*
 
 *Goal:* Modify ESP32 firmware to send scan data via HTTP to FastAPI server.
 
@@ -175,7 +193,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 6: UI / Registration Prompt*
+### *Step 7: UI / Registration Prompt*
 
 *Goal:* Prompt student council members to register new RFID IDs on first scan.
 
@@ -198,7 +216,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 7: Feedback Mechanism*
+### *Step 8: Feedback Mechanism*
 
 *Goal:* Provide real-time feedback to ensure smooth scanning.
 
@@ -215,7 +233,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 8: Offline Handling (Optional but Recommended)*
+### *Step 9: Offline Handling (Optional but Recommended)*
 
 *Goal:* Ensure scanning works even if Wi-Fi/backend connection fails.
 
@@ -232,7 +250,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 9: Testing & Debugging*
+### *Step 10: Testing & Debugging*
 
 *Goal:* Validate the system for real-world use.
 
@@ -253,3 +271,50 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 ---
 
 ✅ *Result:* After completing these steps, the ESP32 RFID scanner will be fully functional for wireless event attendance, first-time registration, and API-based SQLite logging, with user-friendly feedback for the student council.
+
+
+# TODO LIST RECOMMENDED
+When starting a new task, it is recommended to create a todo list.
+
+
+
+
+1. Include the task_progress parameter in your next tool call
+
+2. Create a comprehensive checklist of all steps needed
+
+3. Use markdown format: - [ ] for incomplete, - [x] for complete
+
+
+
+**Benefits of creating a todo list now:**
+
+	- Clear roadmap for implementation
+
+	- Progress tracking throughout the task
+
+	- Nothing gets forgotten or missed
+
+	- Users can see, monitor, and edit the plan
+
+
+
+**Example structure:**
+```
+
+- [ ] Analyze requirements
+
+- [ ] Set up necessary files
+
+- [ ] Implement main functionality
+
+- [ ] Handle edge cases
+
+- [ ] Test the implementation
+
+- [ ] Verify results
+```
+
+
+
+Keeping the todo list updated helps track progress and ensures nothing is missed.
