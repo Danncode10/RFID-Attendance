@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import styles from "./styles";
 
 export default function RegisterScreen() {
@@ -97,7 +98,10 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>📘 Student Registration</Text>
+      <View style={styles.titleContainer}>
+        <Ionicons name="person-outline" size={28} color="#4CAF50" />
+        <Text style={styles.titleText}>Student Registration</Text>
+      </View>
 
       <TextInput
         style={styles.input}
@@ -127,6 +131,16 @@ export default function RegisterScreen() {
         onPress={() => router.push('/view-students')}
       >
         <Text style={styles.buttonText}>View Registered Students</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#FF9800", marginTop: 10 }]}
+        onPress={() => router.push('/events')}
+      >
+        <View style={styles.buttonContent}>
+          <Ionicons name="calendar-outline" size={20} color="#fff" />
+          <Text style={styles.buttonTextWithIcon}>Manage Events</Text>
+        </View>
       </TouchableOpacity>
     </SafeAreaView>
   );

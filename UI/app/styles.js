@@ -6,11 +6,27 @@ export default StyleSheet.create({
     backgroundColor: "#f5f5f5",
     padding: 20,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 20,
+  },
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 20,
+  },
+  titleText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginLeft: 10,
   },
   input: {
     borderWidth: 1,
@@ -30,6 +46,15 @@ export default StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  buttonTextWithIcon: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 8,
   },
   listTitle: {
     fontSize: 18,
@@ -84,5 +109,106 @@ deleteButtonText: {
   color: "#fff",
   fontWeight: "bold",
 },
-
+// Event-specific styles
+eventItem: {
+  backgroundColor: "#fff",
+  marginVertical: 8,
+  borderRadius: 10,
+  padding: 15,
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  elevation: 3,
+},
+eventContent: {
+  flex: 1,
+},
+eventName: {
+  fontSize: 18,
+  fontWeight: "bold",
+  color: "#333",
+  marginBottom: 5,
+},
+eventDate: {
+  fontSize: 14,
+  color: "#666",
+  marginBottom: 3,
+},
+tapHint: {
+  fontSize: 12,
+  color: "#999",
+  fontStyle: "italic",
+},
+emptyText: {
+  textAlign: "center",
+  fontSize: 16,
+  color: "#666",
+  marginTop: 20,
+},
+// Attendance-specific styles
+eventTitle: {
+  fontSize: 22,
+  fontWeight: "bold",
+  textAlign: "center",
+  color: "#333",
+  marginBottom: 5,
+},
+attendanceCount: {
+  fontSize: 16,
+  textAlign: "center",
+  color: "#4CAF50",
+  fontWeight: "bold",
+  marginBottom: 20,
+},
+attendanceItem: {
+  backgroundColor: "#fff",
+  marginVertical: 8,
+  borderRadius: 10,
+  padding: 15,
+  flexDirection: "row",
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowRadius: 3,
+  elevation: 3,
+},
+attendanceContent: {
+  flex: 1,
+},
+studentName: {
+  fontSize: 18,
+  fontWeight: "bold",
+  color: "#333",
+  marginBottom: 5,
+},
+studentDetails: {
+  fontSize: 14,
+  color: "#666",
+  marginBottom: 2,
+},
+scanTime: {
+  fontSize: 12,
+  color: "#4CAF50",
+  fontWeight: "bold",
+  marginTop: 3,
+},
+statusIndicator: {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: "#4CAF50",
+  justifyContent: "center",
+  alignItems: "center",
+  marginLeft: 15,
+},
+statusText: {
+  color: "#fff",
+  fontSize: 18,
+  fontWeight: "bold",
+},
+emptyContainer: {
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 20,
+},
 });

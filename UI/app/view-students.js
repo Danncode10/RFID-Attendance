@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import styles from "./styles";
 
 export default function ViewStudentsScreen() {
@@ -84,7 +85,7 @@ export default function ViewStudentsScreen() {
           )
         }
       >
-        <Text style={styles.deleteButtonText}>🗑️</Text>
+        <Ionicons name="trash-outline" size={18} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -98,7 +99,10 @@ export default function ViewStudentsScreen() {
         <Text style={styles.buttonText}>Back to Registration</Text>
       </TouchableOpacity>
 
-      <Text style={styles.listTitle}>📋 Registered Students</Text>
+      <View style={styles.titleContainer}>
+        <Ionicons name="list-outline" size={24} color="#4CAF50" />
+        <Text style={styles.titleText}>Registered Students</Text>
+      </View>
 
       <View style={styles.tableHeader}>
         <Text style={[styles.tableHeaderText, { flex: 1 }]}>ID</Text>
