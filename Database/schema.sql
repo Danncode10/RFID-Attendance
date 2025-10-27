@@ -1,11 +1,12 @@
--- SQLite schema for RFID Attendance
+x-- SQLite schema for RFID Attendance
 
 -- Students table
 CREATE TABLE IF NOT EXISTS students (
-    student_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    rfid_id TEXT UNIQUE NOT NULL,
-    name TEXT,
-    grade TEXT
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rfid_id TEXT UNIQUE,
+    student_number TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    course_year TEXT NOT NULL
 );
 
 -- Events table
