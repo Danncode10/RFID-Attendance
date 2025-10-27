@@ -50,13 +50,32 @@ This project implements a wireless RFID attendance system for school events usin
 
 ---
 
+## Folder Structure
+
+- **UI/**: Mobile app for event management and attendance viewing (React Native/Expo)
+- **Arduino/**: ESP32 firmware code for RFID scanning
+- **Database/**: MySQL schemas, scripts, and configurations
+- **Hardware/**: Wiring diagrams and hardware setup notes
+- **Documentation/**: MasterPlan and project documentation
+- **Config/**: Configuration files and credentials
+
 ## Setup
 
-1. Connect ESP32 and RC522 as per wiring diagram.
-2. Upload Arduino sketch to ESP32.
-3. Configure Wi-Fi hotspot on ESP32.
-4. Ensure MySQL database is accessible and create tables using HeidiSQL.
-5. Scan RFID tags to test attendance logging.
+### Hardware & Firmware
+1. Connect ESP32 and RC522 as per Hardware/README.md wiring diagram.
+2. Upload Arduino sketch from Arduino/ folder to ESP32.
+3. Configure Wi-Fi hotspot on ESP32 as per Config/.
+
+### Database
+4. Create MySQL database and run Database/schema.sql using HeidiSQL.
+
+### Mobile UI
+5. Install dependencies: cd UI/ && npm install
+6. Start the app: npm start
+7. Connect to ESP32 hotspot for registration and scanning interactions.
+
+### Testing
+8. Run tests for individual components as described in MasterPlan.md in Documentation/.
 
 ---
 
