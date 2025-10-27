@@ -5,9 +5,9 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 
 * Each scan is linked to a *specific event* created/managed by the Student Council.
 * First-time scans trigger a *UI prompt to register the student*.
-* The device creates its *own Wi-Fi hotspot*, and sends scanned data *directly to a SQL database*.
+* The device creates its *own Wi-Fi hotspot*, and sends scanned data to a *FastAPI backend server*, which manages the SQLite database.
 * Visual/audio feedback confirms successful scans or new registrations.
-* Optional: store scans temporarily if Wi-Fi is down (for reliability).
+* Optional: store scans temporarily if Wi-Fi/backend is down (for reliability).
 
 ---
 
@@ -18,17 +18,26 @@ We are building a *wireless ESP32 device with RC522 RFID scanner* to track atten
 * ESP32 development board (Wi-Fi enabled)
 * RC522 RFID module
 * LEDs and/or buzzer for feedback
+* Server device (e.g., Raspberry Pi or computer) to run FastAPI backend
 
-*Software / Libraries (Arduino / C++):*
+*Software / Libraries:*
+
+*Arduino / C++ (ESP32 firmware):*
 
 * MFRC522 library for RFID reading
 * WiFi.h (ESP32 Wi-Fi hotspot functionality)
-* MySQL_Connection / MySQL_Cursor library for direct SQL access from ESP32
+* HTTPClient.h for API requests to FastAPI
 * Optional: EEPROM.h or SPIFFS.h for temporary offline storage
+
+*Backend:*
+
+* FastAPI (Python) for REST API
+* SQLite as the database
+* SqlAlchemy or similar ORM for database interactions
 
 *Database:*
 
-* MySQL / MariaDB managed via HeidiSQL
+* SQLite
 * Tables: students, events, attendance_logs
 
 
@@ -120,54 +129,67 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 4: SQL Database Connection*
+### *Step 4: FastAPI Backend Development*
 
-*Goal:* Connect ESP32 directly to the MySQL/MariaDB database and perform queries.
+*Goal:* Develop the FastAPI server to handle API requests from ESP32 and UI, managing the SQLite database.
 
 *Tasks & Details:*
 
-1. Include MySQL library for ESP32: MySQL_Connection & MySQL_Cursor.
-2. Store *database credentials securely* in ESP32 code: host IP, port, username, password, database name.
-3. On scan:
+1. Set up a Python virtual environment and install dependencies: FastAPI, Uvicorn, SqlAlchemy, SQLite.
+2. Define API endpoints:
 
-   * Check if student exists:
+   * POST /scan: Receive UID from ESP32, check if student exists, log attendance if yes, return new_student if no.
+   * POST /register: Register new student with name/grade from UI.
+   * GET /students: Retrieve student list for UI.
+   * POST /events: Create/manage events.
+   * GET /attendance: View attendance logs.
 
-     
-     SELECT student_id FROM students WHERE rfid_id = 'UID';
-     
-   * If new:
-
-     
-     INSERT INTO students(rfid_id, name, grade) VALUES('UID', '', '');
-     
-   * Log attendance:
-
-     
-     INSERT INTO attendance_logs(student_id, event_id, scan_timestamp) VALUES(..., ..., NOW());
-     
-4. Handle SQL connection errors gracefully (retry logic or feedback LED).
+3. Initialize SQLite database with schema from Database/schema.sql.
+4. Secure API with basic auth or API keys if needed.
+5. Run FastAPI server on the server device, accessible via HTTP over the ESP32 hotspot.
 
 *Why it matters:*
 
-* Direct SQL ensures *real-time attendance logging*.
-* Proper error handling prevents data loss or duplication.
+* FastAPI provides a clean REST API for decoupling ESP32 firmware from database logic.
+* Enables centralized data management and easier integration with UI.
 
 ---
 
-### *Step 5: UI / Registration Prompt*
+### *Step 5: ESP32 API Integration*
+
+*Goal:* Modify ESP32 firmware to send scan data via HTTP to FastAPI server.
+
+*Tasks & Details:*
+
+1. Include HTTPClient.h library for ESP32.
+2. After reading UID, send POST /scan request to FastAPI with UID and event_id.
+3. Handle response:
+
+   * If student exists, log success, green LED.
+   * If new student, red LED, wait for registration via UI.
+4. Retry on connection failure, store temporarily if offline.
+
+*Why it matters:*
+
+* Integrates ESP32 with backend API for centralized data handling.
+
+---
+
+### *Step 6: UI / Registration Prompt*
 
 *Goal:* Prompt student council members to register new RFID IDs on first scan.
 
 *Tasks & Details:*
 
-1. *LED/Buzzer feedback:*
+1. *LED/Buzzer feedback on ESP32:*
 
-   * Flash red LED + buzzer beep if first-time scan detected.
-2. *Mobile app interaction (optional):*
+   * Flash red LED + buzzer beep if first-time scan detected (signaled from API).
+2. *Mobile app interaction:*
 
-   * Connect app to ESP32 hotspot
-   * Show “New ID detected. Register?” prompt
-   * Input name/grade/class, send SQL insert query via ESP32 hotspot
+   * Connect to ESP32 hotspot and FastAPI server.
+   * Poll API or receive notifications for new scans.
+   * Show "New ID detected. Register?" prompt with UID.
+   * Input name/grade/class, send POST /register to FastAPI.
 
 *Why it matters:*
 
@@ -176,7 +198,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 6: Feedback Mechanism*
+### *Step 7: Feedback Mechanism*
 
 *Goal:* Provide real-time feedback to ensure smooth scanning.
 
@@ -193,15 +215,15 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 7: Offline Handling (Optional but Recommended)*
+### *Step 8: Offline Handling (Optional but Recommended)*
 
-*Goal:* Ensure scanning works even if Wi-Fi/database connection fails.
+*Goal:* Ensure scanning works even if Wi-Fi/backend connection fails.
 
 *Tasks & Details:*
 
 1. Use *EEPROM or SPIFFS* to store temporary scans: UID + timestamp + event\_id
-2. Once Wi-Fi is restored, *batch upload scans* to SQL database
-3. Mark synced entries as completed to avoid duplicates
+2. Once connection is restored, *batch upload scans* via API to FastAPI server.
+3. Mark synced entries as completed to avoid duplicates.
 
 *Why it matters:*
 
@@ -210,7 +232,7 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-### *Step 8: Testing & Debugging*
+### *Step 9: Testing & Debugging*
 
 *Goal:* Validate the system for real-world use.
 
@@ -230,4 +252,4 @@ Scan RFID -> Read UID -> Convert UID -> Query students table
 
 ---
 
-✅ *Result:* After completing these steps, the ESP32 RFID scanner will be fully functional for wireless event attendance, first-time registration, and direct SQL logging, with user-friendly feedback for the student council.
+✅ *Result:* After completing these steps, the ESP32 RFID scanner will be fully functional for wireless event attendance, first-time registration, and API-based SQLite logging, with user-friendly feedback for the student council.

@@ -1,28 +1,26 @@
-CREATE DATABASE rfid_attendance IF NOT EXISTS;
-
-USE rfid_attendance;
+-- SQLite schema for RFID Attendance
 
 -- Students table
-CREATE TABLE students (
-    student_id INT AUTO_INCREMENT PRIMARY KEY,
-    rfid_id VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(100),
-    grade VARCHAR(20)
+CREATE TABLE IF NOT EXISTS students (
+    student_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rfid_id TEXT UNIQUE NOT NULL,
+    name TEXT,
+    grade TEXT
 );
 
 -- Events table
-CREATE TABLE events (
-    event_id INT AUTO_INCREMENT PRIMARY KEY,
-    event_name VARCHAR(100) NOT NULL,
-    event_date DATETIME NOT NULL
+CREATE TABLE IF NOT EXISTS events (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_name TEXT NOT NULL,
+    event_date TEXT NOT NULL  -- Store as ISO date string (YYYY-MM-DD HH:MM:SS)
 );
 
 -- Attendance logs table
-CREATE TABLE attendance_logs (
-    log_id INT AUTO_INCREMENT PRIMARY KEY,
-    student_id INT,
-    event_id INT,
-    scan_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS attendance_logs (
+    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER,
+    event_id INTEGER,
+    scan_timestamp TEXT DEFAULT CURRENT_TIMESTAMP,  -- Store as ISO datetime string
     FOREIGN KEY (student_id) REFERENCES students(student_id),
     FOREIGN KEY (event_id) REFERENCES events(event_id)
 );
