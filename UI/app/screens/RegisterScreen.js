@@ -65,12 +65,14 @@ export default function RegisterScreen({ navigation, route }) {
     const ws = new WebSocket('ws://13.214.102.163:8000/ws');
 
     ws.onopen = () => console.log('✅ WebSocket Connected');
+
     ws.onmessage = (event) => {
       console.log('📡 Received UID:', event.data);
-      setUid(event.data);
+      setUid(event.data); // ✅ This updates your input box automatically
     };
-    ws.onerror = (err) => console.error('WebSocket Error:', err?.message ?? err);
-    ws.onclose = () => console.log('❌ WebSocket Closed');
+
+    ws.onerror = (err) => console.error('❌ WebSocket Error:', err);
+    ws.onclose = () => console.log('🔌 WebSocket Closed');
 
     return () => {
       ws.close();
@@ -178,8 +180,8 @@ export default function RegisterScreen({ navigation, route }) {
             <TextInput
               style={styles.input}
               placeholder="RFID UID (e.g. 56EEC2B8)"
-              value={uid}
-              onChangeText={setUid}
+              value={uid}               // <-- controlled by state
+              onChangeText={setUid}     // <-- user can still edit manually
               autoCapitalize="characters"
               placeholderTextColor="#999"
             />
