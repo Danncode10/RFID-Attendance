@@ -7,7 +7,10 @@
 // WiFi Configuration
 // const char* WIFI_SSID = "Helping the poor is my PASSION";          // Replace with your WiFi SSID
 // const char* WIFI_PASSWORD = "lefeiram";  // Replace with your WiFi password
-const char* WIFI_SSID = "HUAWEI-5G-f8Yq";          // Replace with your WiFi SSID
+// Note: It cant read 5Ghz Wifi, use 2.4Ghz
+
+// Home Wifi
+const char* WIFI_SSID = "HUAWEI-2.4G-f8Yq";          // Replace with your WiFi SSID
 const char* WIFI_PASSWORD = "CccTn8z4";  // Replace with your WiFi password
 
 // WiFi connection timeout (in attempts, each 500ms)
