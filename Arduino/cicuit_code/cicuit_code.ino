@@ -3,7 +3,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <Wire.h> // Required for I2C communication
+#include <LiquidCrystal_I2C.h> // Include the LCD library
 #include "esp32_config.h"
+
+// Define I2C LCD pins and object
+#define LCD_SDA 32
+#define LCD_SCL 33
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address, 16, 2 for 16x2 LCD
 
 #define SS_PIN 21   // SDA
 #define RST_PIN 22  // RST
@@ -63,6 +70,12 @@ void setup() {
 
   Serial.println("RFID Attendance System Ready!");
   Serial.println("Place your card near the reader...");
+
+  // Initialize I2C for LCD
+  Wire.begin(LCD_SDA, LCD_SCL);
+  lcd.begin(); // Initialize the LCD
+  lcd.backlight();
+  lcd.print("Place card...");
 }
 
 void loop() {
@@ -90,11 +103,18 @@ void loop() {
   Serial.print("Card UID: ");
   Serial.println(uidString);
 
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("UID: ");
+  lcd.print(uidString);
+
   // Send UID to API for authorization
   bool authorized = checkAuthorizationWithAPI(uidString);
 
   if (authorized) {
     Serial.println("Access Granted");
+    lcd.setCursor(0, 1);
+    lcd.print("Access Granted");
 
     digitalWrite(GREEN_LED, HIGH);
     digitalWrite(RED_LED, LOW);
@@ -105,6 +125,8 @@ void loop() {
     digitalWrite(GREEN_LED, LOW);
   } else {
     Serial.println("Access Denied");
+    lcd.setCursor(0, 1);
+    lcd.print("Access Denied");
 
     digitalWrite(RED_LED, HIGH);
     digitalWrite(GREEN_LED, LOW);
@@ -118,6 +140,9 @@ void loop() {
   // Halt card
   rfid.PICC_HaltA();
   rfid.PCD_StopCrypto1();
+
+  // Small delay to prevent rapid re-reads
+  delay(1000);
 }
 
 // Check authorization with API server
