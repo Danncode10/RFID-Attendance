@@ -35,6 +35,10 @@ export default StyleSheet.create({
     padding: 10,
     marginVertical: 8,
     backgroundColor: "#fff",
+    height: 50,
+    color: "#000",
+    fontSize: 16,
+    placeholderTextColor: "#999",
   },
   button: {
     backgroundColor: "#007bff",

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -25,6 +24,7 @@ const courseYearOptions = {
 export default function RegisterScreen({ navigation, route }) {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
+  const [uid, setUid] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [courseYear, setCourseYear] = useState("");
@@ -71,15 +71,21 @@ export default function RegisterScreen({ navigation, route }) {
 
   // ✅ Validation
   const validateInputs = () => {
-    if (!studentId || !name.trim() || !courseYear.trim()) {
+    if (!studentId || !name.trim() || !uid.trim() || !courseYear.trim()) {
       Alert.alert("Please fill the registration form.");
       return false;
     }
 
     const idPattern = /^\d{3}-\d{4}$/;
+    const uidPattern = /^[A-Fa-f0-9]{8}$/; // 8-character hex UID
 
     if (!idPattern.test(studentId)) {
       Alert.alert("Invalid ID format", "Example: 123-4567");
+      return false;
+    }
+
+    if (!uidPattern.test(uid.trim())) {
+      Alert.alert("Invalid UID format", "UID should be 8 hexadecimal characters (e.g. 56EEC2B8)");
       return false;
     }
     return true;
@@ -98,10 +104,18 @@ export default function RegisterScreen({ navigation, route }) {
       return;
     }
 
+    // Check if UID already exists
+    const uidExists = students.some(s => s.uid === uid.trim().toUpperCase());
+    if (uidExists) {
+      Alert.alert("Cannot register because this UID is already registered.");
+      return;
+    }
+
     const newStudent = {
       id: Date.now().toString(),
       studentId: trimmedStudentId,
       name: name.trim(),
+      uid: uid.trim().toUpperCase(),
       courseYear,
     };
 
@@ -112,69 +126,83 @@ export default function RegisterScreen({ navigation, route }) {
     Alert.alert("✅ Success", "Student registered successfully!");
     setStudentId("");
     setName("");
+    setUid("");
     setSelectedCourse("");
     setSelectedSection("");
     setCourseYear("");
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.container}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          <Text style={styles.title}>📘 Student Registration</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Student ID (e.g. 231-1234)"
-            value={studentId}
-            onChangeText={setStudentId}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            value={name}
-            onChangeText={setName}
-          />
-          <RNPickerSelect
-            value={selectedCourse}
-            onValueChange={(value) => { setSelectedCourse(value); setSelectedSection(""); }}
-            items={courses.map((course) => ({ label: course, value: course }))}
-            placeholder={{ label: 'Select Course', value: null }}
-            style={{
-              placeholder: styles.input,
-              inputIOS: styles.input,
-              inputAndroid: styles.input,
-            }}
-          />
-          <RNPickerSelect
-            value={selectedSection}
-            onValueChange={(value) => setSelectedSection(value)}
-            items={selectedCourse ? courseYearOptions[selectedCourse].map((section) => ({ label: section, value: section })) : []}
-            placeholder={{ label: 'Select Section', value: null }}
-            style={{
-              placeholder: styles.input,
-              inputIOS: styles.input,
-              inputAndroid: styles.input,
-            }}
-            disabled={!selectedCourse}
-          />
-
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>Register</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
-            onPress={() => navigation.navigate("ViewStudents", { students })}
+    <View style={{ flex: 1 }}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.container, { padding: 0 }]}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 20 }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
-            <Text style={styles.buttonText}>View Registered Students</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+            <Text style={styles.title}>📘 Student Registration</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Student ID (e.g. 231-1234)"
+              value={studentId}
+              onChangeText={setStudentId}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Names"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="RFID UID (e.g. 56EEC2B8)"
+              value={uid}
+              onChangeText={setUid}
+              autoCapitalize="characters"
+              placeholderTextColor="#999"
+            />
+            <RNPickerSelect
+              value={selectedCourse}
+              onValueChange={(value) => { setSelectedCourse(value); setSelectedSection(""); }}
+              items={courses.map((course) => ({ label: course, value: course }))}
+              placeholder={{ label: 'Select Course', value: null }}
+              style={{
+                placeholder: styles.input,
+                inputIOS: styles.input,
+                inputAndroid: styles.input,
+              }}
+            />
+            <RNPickerSelect
+              value={selectedSection}
+              onValueChange={(value) => setSelectedSection(value)}
+              items={selectedCourse ? courseYearOptions[selectedCourse].map((section) => ({ label: section, value: section })) : []}
+              placeholder={{ label: 'Select Section', value: null }}
+              style={{
+                placeholder: styles.input,
+                inputIOS: styles.input,
+                inputAndroid: styles.input,
+              }}
+              disabled={!selectedCourse}
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <Text style={styles.buttonText}>Register</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
+              onPress={() => navigation.navigate("ViewStudents", { students })}
+            >
+              <Text style={styles.buttonText}>View Registered Students</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
   );
 }

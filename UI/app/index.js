@@ -1,22 +1,44 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
   Alert,
 } from "react-native";
+import RNPickerSelect from 'react-native-picker-select';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import styles from "./styles";
+
+const courses = ["BSCS", "BSIT", "BSIS"];
+
+const courseYearOptions = {
+  BSCS: ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'],
+  BSIT: ['1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
+  BSIS: ['1A', '2A', '3A', '4A']
+};
 
 export default function RegisterScreen() {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
+  const [uid, setUid] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
   const [courseYear, setCourseYear] = useState("");
   const [students, setStudents] = useState([]);
+
+  // ✅ Build courseYear when course and section changes
+  useEffect(() => {
+    if (selectedCourse && selectedSection) {
+      setCourseYear(`${selectedCourse} ${selectedSection}`);
+    } else {
+      setCourseYear("");
+    }
+  }, [selectedCourse, selectedSection]);
 
   // ✅ Load saved students on app start
   useEffect(() => {
@@ -31,9 +53,6 @@ export default function RegisterScreen() {
     loadStudents();
   }, []);
 
-  // ✅ No route params in this setup
-  // Effects removed simplified
-
   // ✅ Save students permanently
   const saveStudents = async (list) => {
     try {
@@ -45,20 +64,21 @@ export default function RegisterScreen() {
 
   // ✅ Validation
   const validateInputs = () => {
-    if (!studentId || !name.trim() || !courseYear.trim()) {
+    if (!studentId || !name.trim() || !uid.trim() || !courseYear.trim()) {
       Alert.alert("Please fill the registration form.");
       return false;
     }
 
     const idPattern = /^\d{3}-\d{4}$/;
-    const courseYearPattern = /^[A-Z]{2,4}\s\d{1,2}[A-Z]$/;
+    const uidPattern = /^[A-Fa-f0-9]{8}$/; // 8-character hex UID
 
     if (!idPattern.test(studentId)) {
-      Alert.alert("Invalid ID format", "Example: 231-1234");
+      Alert.alert("Invalid ID format", "Example: 123-4567");
       return false;
     }
-    if (!courseYearPattern.test(courseYear)) {
-      Alert.alert("Invalid Course & Year", "Example: BSCS 3B");
+
+    if (!uidPattern.test(uid.trim())) {
+      Alert.alert("Invalid UID format", "UID should be 8 hexadecimal characters (e.g. 56EEC2B8)");
       return false;
     }
     return true;
@@ -68,21 +88,27 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!validateInputs()) return;
 
-    // allow re-registering deleted students (no permanent restriction)
-    const exists = students.some(
-      (s) =>
-        s.studentId === studentId &&
-        s.name.trim().toLowerCase() === name.trim().toLowerCase()
-    );
+    const trimmedStudentId = studentId.trim();
+
+    // Check if ID already exists
+    const exists = students.some(s => s.studentId === trimmedStudentId);
     if (exists) {
-      Alert.alert("Already Registered", "This student already exists.");
+      Alert.alert("Cannot register because this ID is already registered.");
+      return;
+    }
+
+    // Check if UID already exists
+    const uidExists = students.some(s => s.uid === uid.trim().toUpperCase());
+    if (uidExists) {
+      Alert.alert("Cannot register because this UID is already registered.");
       return;
     }
 
     const newStudent = {
       id: Date.now().toString(),
-      studentId,
-      name,
+      studentId: trimmedStudentId,
+      name: name.trim(),
+      uid: uid.trim().toUpperCase(),
       courseYear,
     };
 
@@ -93,55 +119,83 @@ export default function RegisterScreen() {
     Alert.alert("✅ Success", "Student registered successfully!");
     setStudentId("");
     setName("");
+    setUid("");
+    setSelectedCourse("");
+    setSelectedSection("");
     setCourseYear("");
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Ionicons name="person-outline" size={28} color="#4CAF50" />
-        <Text style={styles.titleText}>Student Registration</Text>
-      </View>
+    <View style={{ flex: 1 }}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.container, { padding: 0 }]}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 20 }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <Text style={styles.title}>📘 Student Registration</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Student ID (e.g. 231-1234)"
-        value={studentId}
-        onChangeText={setStudentId}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Course & Year (e.g. BSCS 3B)"
-        value={courseYear}
-        onChangeText={setCourseYear}
-      />
+            <TextInput
+              style={styles.input}
+              placeholder="Student ID (e.g. 231-1234)"
+              value={studentId}
+              onChangeText={setStudentId}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Names"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="RFID UID (e.g. 56EEC2B8)"
+              value={uid}
+              onChangeText={setUid}
+              autoCapitalize="characters"
+              placeholderTextColor="#999"
+            />
+            <RNPickerSelect
+              value={selectedCourse}
+              onValueChange={(value) => { setSelectedCourse(value); setSelectedSection(""); }}
+              items={courses.map((course) => ({ label: course, value: course }))}
+              placeholder={{ label: 'Select Course', value: null }}
+              style={{
+                placeholder: styles.input,
+                inputIOS: styles.input,
+                inputAndroid: styles.input,
+              }}
+            />
+            <RNPickerSelect
+              value={selectedSection}
+              onValueChange={(value) => setSelectedSection(value)}
+              items={selectedCourse ? courseYearOptions[selectedCourse].map((section) => ({ label: section, value: section })) : []}
+              placeholder={{ label: 'Select Section', value: null }}
+              style={{
+                placeholder: styles.input,
+                inputIOS: styles.input,
+                inputAndroid: styles.input,
+              }}
+              disabled={!selectedCourse}
+            />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <Text style={styles.buttonText}>Register</Text>
+            </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
-        onPress={() => router.push('/view-students')}
-      >
-        <Text style={styles.buttonText}>View Registered Students</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: "#FF9800", marginTop: 10 }]}
-        onPress={() => router.push('/events')}
-      >
-        <View style={styles.buttonContent}>
-          <Ionicons name="calendar-outline" size={20} color="#fff" />
-          <Text style={styles.buttonTextWithIcon}>Manage Events</Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
+              onPress={() => router.push('/view-students')}
+            >
+              <Text style={styles.buttonText}>View Registered Students</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
-      </TouchableOpacity>
-    </SafeAreaView>
+      </TouchableWithoutFeedback>
+    </View>
   );
 }

@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include "../../Config/esp32_config.h"
+#include "esp32_config.h"
 
 #define SS_PIN 21   // SDA
 #define RST_PIN 22  // RST
