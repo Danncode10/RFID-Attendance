@@ -1,10 +1,40 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import sqlite3
 from datetime import datetime
 from typing import List, Optional
 
 app = FastAPI(title="RFID Attendance API", version="1.0.0")
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or later restrict to your React app IP/domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+manager = ConnectionManager()
 
 # Database connection
 def get_db():
@@ -54,13 +84,28 @@ async def scan_rfid(request: ScanRequest):
                 (student['id'], request.event_id, datetime.now().isoformat())
             )
             conn.commit()
+            # Broadcast the scanned UID to all connected WebSocket clients
+            await manager.broadcast(request.uid)
             return {"authorized": True, "name": student['name']}
         else:
+            # Broadcast the scanned UID even if not authorized, so the app can still populate the field
+            await manager.broadcast(request.uid)
             return {"authorized": False, "uid": request.uid}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
+        conn.close()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text() # Keep connection alive
+            # You can add logic here to handle messages from the client if needed
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 @app.post("/register")
 async def register_student(request: RegisterRequest):

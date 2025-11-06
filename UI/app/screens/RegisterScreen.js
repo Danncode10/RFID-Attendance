@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -59,6 +59,23 @@ export default function RegisterScreen({ navigation, route }) {
       saveStudents(route.params.updatedStudents);
     }
   }, [route.params?.updatedStudents]);
+
+  // WebSocket connection for RFID UID
+  useEffect(() => {
+    const ws = new WebSocket('ws://13.214.102.163:8000/ws');
+
+    ws.onopen = () => console.log('✅ WebSocket Connected');
+    ws.onmessage = (event) => {
+      console.log('📡 Received UID:', event.data);
+      setUid(event.data);
+    };
+    ws.onerror = (err) => console.error('WebSocket Error:', err?.message ?? err);
+    ws.onclose = () => console.log('❌ WebSocket Closed');
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   // ✅ Save students permanently
   const saveStudents = async (list) => {
