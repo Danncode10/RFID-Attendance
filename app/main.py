@@ -16,12 +16,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from starlette.websockets import WebSocketDisconnect, WebSocketState
+from fastapi.responses import HTMLResponse
+from fastapi import status
+
+@app.middleware("http")
+async def websocket_origin_middleware(request, call_next):
+    # Allow WebSocket upgrade requests manually
+    if request.headers.get("upgrade", "").lower() == "websocket":
+        origin = request.headers.get("origin")
+        print(f"🔗 WebSocket upgrade attempt from: {origin}")
+    return await call_next(request)
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
-        await websocket.accept()
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
@@ -99,11 +110,12 @@ async def scan_rfid(request: ScanRequest):
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+    # ✅ Manually accept all origins
+    await websocket.accept()
     try:
+        await manager.connect(websocket)
         while True:
-            data = await websocket.receive_text() # Keep connection alive
-            # You can add logic here to handle messages from the client if needed
+            data = await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
