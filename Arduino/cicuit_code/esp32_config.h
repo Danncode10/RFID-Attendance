@@ -5,8 +5,10 @@
 #define ESP32_CONFIG_H
 
 // WiFi Configuration
-const char* WIFI_SSID = "Helping the poor is my PASSION";          // Replace with your WiFi SSID
-const char* WIFI_PASSWORD = "lefeiram";  // Replace with your WiFi password
+// const char* WIFI_SSID = "Helping the poor is my PASSION";          // Replace with your WiFi SSID
+// const char* WIFI_PASSWORD = "lefeiram";  // Replace with your WiFi password
+const char* WIFI_SSID = "HUAWEI-5G-f8Yq";          // Replace with your WiFi SSID
+const char* WIFI_PASSWORD = "CccTn8z4";  // Replace with your WiFi password
 
 // WiFi connection timeout (in attempts, each 500ms)
 const int WIFI_CONNECT_ATTEMPTS = 20;  // 10 seconds total

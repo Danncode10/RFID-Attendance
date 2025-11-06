@@ -10,9 +10,10 @@ import {
   Alert,
 } from "react-native";
 import RNPickerSelect from 'react-native-picker-select';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from 'expo-router';
 import styles from "./styles";
+
+const API_BASE_URL = "http://13.214.102.163:8000"; // Replace with your backend URL
 
 const courses = ["BSCS", "BSIT", "BSIS"];
 
@@ -29,7 +30,6 @@ export default function RegisterScreen() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [courseYear, setCourseYear] = useState("");
-  const [students, setStudents] = useState([]);
 
   // ✅ Build courseYear when course and section changes
   useEffect(() => {
@@ -39,28 +39,6 @@ export default function RegisterScreen() {
       setCourseYear("");
     }
   }, [selectedCourse, selectedSection]);
-
-  // ✅ Load saved students on app start
-  useEffect(() => {
-    const loadStudents = async () => {
-      try {
-        const saved = await AsyncStorage.getItem("students");
-        if (saved) setStudents(JSON.parse(saved));
-      } catch (error) {
-        console.error("Error loading students", error);
-      }
-    };
-    loadStudents();
-  }, []);
-
-  // ✅ Save students permanently
-  const saveStudents = async (list) => {
-    try {
-      await AsyncStorage.setItem("students", JSON.stringify(list));
-    } catch (error) {
-      console.error("Error saving students", error);
-    }
-  };
 
   // ✅ Validation
   const validateInputs = () => {
@@ -88,41 +66,36 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!validateInputs()) return;
 
-    const trimmedStudentId = studentId.trim();
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rfid_id: uid.trim().toUpperCase(),
+          name: name.trim(),
+          course_year: courseYear,
+        }),
+      });
 
-    // Check if ID already exists
-    const exists = students.some(s => s.studentId === trimmedStudentId);
-    if (exists) {
-      Alert.alert("Cannot register because this ID is already registered.");
-      return;
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert("✅ Success", "Student registered successfully!");
+        setStudentId("");
+        setName("");
+        setUid("");
+        setSelectedCourse("");
+        setSelectedSection("");
+        setCourseYear("");
+      } else {
+        Alert.alert("Registration Failed", data.detail || "An error occurred.");
+      }
+    } catch (error) {
+      console.error("Error registering student:", error);
+      Alert.alert("Error", "Could not connect to the server.");
     }
-
-    // Check if UID already exists
-    const uidExists = students.some(s => s.uid === uid.trim().toUpperCase());
-    if (uidExists) {
-      Alert.alert("Cannot register because this UID is already registered.");
-      return;
-    }
-
-    const newStudent = {
-      id: Date.now().toString(),
-      studentId: trimmedStudentId,
-      name: name.trim(),
-      uid: uid.trim().toUpperCase(),
-      courseYear,
-    };
-
-    const updatedList = [...students, newStudent];
-    setStudents(updatedList);
-    await saveStudents(updatedList);
-
-    Alert.alert("✅ Success", "Student registered successfully!");
-    setStudentId("");
-    setName("");
-    setUid("");
-    setSelectedCourse("");
-    setSelectedSection("");
-    setCourseYear("");
   };
 
   return (
