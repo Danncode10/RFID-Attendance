@@ -44,6 +44,7 @@ export default function ViewStudentsScreen() {
 
   const renderItem = ({ item }) => (
     <View style={styles.tableRow}>
+      <Text style={[styles.tableCell, { flex: 1 }]}>{item.student_id}</Text>
       <Text style={[styles.tableCell, { flex: 1 }]}>{item.rfid_id}</Text>
       <Text style={[styles.tableCell, { flex: 2 }]}>{item.name}</Text>
       <Text style={[styles.tableCell, { flex: 1 }]}>{item.course_year}</Text>
@@ -72,6 +73,7 @@ export default function ViewStudentsScreen() {
       <Text style={styles.listTitle}>📋 Registered Students</Text>
 
       <View style={styles.tableHeader}>
+        <Text style={[styles.tableHeaderText, { flex: 1 }]}>Student ID</Text>
         <Text style={[styles.tableHeaderText, { flex: 1 }]}>RFID ID</Text>
         <Text style={[styles.tableHeaderText, { flex: 2 }]}>Name</Text>
         <Text style={[styles.tableHeaderText, { flex: 1 }]}>Course & Year</Text>
