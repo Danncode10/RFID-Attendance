@@ -73,9 +73,17 @@ void setup() {
 
   // Initialize I2C for LCD
   Wire.begin(LCD_SDA, LCD_SCL);
-  lcd.begin(); // Initialize the LCD
+  Serial.println("Initializing LCD...");
+  lcd.begin(16, 2); // Initialize the LCD display with 16 columns, 2 rows
+  Serial.println("LCD begin called");
   lcd.backlight();
-  lcd.print("Place card...");
+  Serial.println("LCD backlight on");
+  lcd.print("System Ready!");
+  Serial.println("Printed 'System Ready!' to LCD");
+  delay(2000); // Show test message for 2 seconds
+  lcd.clear();
+  lcd.print("Scan ID...");
+  Serial.println("LCD setup complete");
 }
 
 void loop() {
