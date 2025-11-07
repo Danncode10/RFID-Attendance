@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,38 +9,17 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "../styles";
 
+const API_BASE_URL = "http://13.214.102.163:8000"; // Replace with your backend URL
 
 
-export default function RegisterScreen({ navigation, route }) {
+
+export default function RegisterScreen({ navigation }) {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
   const [uid, setUid] = useState("");
   const [courseYear, setCourseYear] = useState("");
-  const [students, setStudents] = useState([]);
-
-  // ✅ Load saved students on app start
-  useEffect(() => {
-    const loadStudents = async () => {
-      try {
-        const saved = await AsyncStorage.getItem("students");
-        if (saved) setStudents(JSON.parse(saved));
-      } catch (error) {
-        console.error("Error loading students", error);
-      }
-    };
-    loadStudents();
-  }, []);
-
-  // ✅ Reload list when returning from ViewStudentsScreen (after delete)
-  useEffect(() => {
-    if (route.params?.updatedStudents) {
-      setStudents(route.params.updatedStudents);
-      saveStudents(route.params.updatedStudents);
-    }
-  }, [route.params?.updatedStudents]);
 
   // WebSocket connection for RFID UID
   useEffect(() => {
@@ -61,14 +40,7 @@ export default function RegisterScreen({ navigation, route }) {
     };
   }, []);
 
-  // ✅ Save students permanently
-  const saveStudents = async (list) => {
-    try {
-      await AsyncStorage.setItem("students", JSON.stringify(list));
-    } catch (error) {
-      console.error("Error saving students", error);
-    }
-  };
+
 
   // ✅ Validation
   const validateInputs = () => {
@@ -96,39 +68,40 @@ export default function RegisterScreen({ navigation, route }) {
   const handleRegister = async () => {
     if (!validateInputs()) return;
 
-    const trimmedStudentId = studentId.trim();
+    try {
+      const response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          student_id: studentId.trim(),
+          rfid_id: uid.trim().toUpperCase(),
+          name: name.trim(),
+          course_year: courseYear.trim(),
+        }),
+      });
 
-    // Check if ID already exists
-    const exists = students.some(s => s.studentId === trimmedStudentId);
-    if (exists) {
-      Alert.alert("Cannot register because this ID is already registered.");
-      return;
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert("✅ Success", "Student registered successfully!");
+        setStudentId("");
+        setName("");
+        setUid("");
+        setCourseYear("");
+      } else {
+        // Handle API errors
+        if (response.status === 400) {
+          Alert.alert("Registration Failed", data.detail || "This account is already registered.");
+        } else {
+          Alert.alert("Something went wrong", "Please try again later.");
+        }
+      }
+    } catch (error) {
+      console.error("Error registering student:", error);
+      Alert.alert("Something went wrong", "Could not connect to the server. Please check your connection.");
     }
-
-    // Check if UID already exists
-    const uidExists = students.some(s => s.uid === uid.trim().toUpperCase());
-    if (uidExists) {
-      Alert.alert("Cannot register because this UID is already registered.");
-      return;
-    }
-
-    const newStudent = {
-      id: Date.now().toString(),
-      studentId: trimmedStudentId,
-      name: name.trim(),
-      uid: uid.trim().toUpperCase(),
-      courseYear,
-    };
-
-    const updatedList = [...students, newStudent];
-    setStudents(updatedList);
-    await saveStudents(updatedList);
-
-    Alert.alert("✅ Success", "Student registered successfully!");
-    setStudentId("");
-    setName("");
-    setUid("");
-    setCourseYear("");
   };
 
   return (
@@ -180,7 +153,7 @@ export default function RegisterScreen({ navigation, route }) {
 
             <TouchableOpacity
               style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
-              onPress={() => navigation.navigate("ViewStudents", { students })}
+              onPress={() => navigation.navigate("ViewStudents")}
             >
               <Text style={styles.buttonText}>View Registered Students</Text>
             </TouchableOpacity>
