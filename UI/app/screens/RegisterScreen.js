@@ -9,35 +9,17 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import RNPickerSelect from 'react-native-picker-select';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "../styles";
 
-const courses = ["BSCS", "BSIT", "BSIS"];
 
-const courseYearOptions = {
-  BSCS: ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'],
-  BSIT: ['1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
-  BSIS: ['1A', '2A', '3A', '4A']
-};
 
 export default function RegisterScreen({ navigation, route }) {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
   const [uid, setUid] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
   const [courseYear, setCourseYear] = useState("");
   const [students, setStudents] = useState([]);
-
-  // ✅ Build courseYear when course and section changes
-  useEffect(() => {
-    if (selectedCourse && selectedSection) {
-      setCourseYear(`${selectedCourse} ${selectedSection}`);
-    } else {
-      setCourseYear("");
-    }
-  }, [selectedCourse, selectedSection]);
 
   // ✅ Load saved students on app start
   useEffect(() => {
@@ -146,8 +128,6 @@ export default function RegisterScreen({ navigation, route }) {
     setStudentId("");
     setName("");
     setUid("");
-    setSelectedCourse("");
-    setSelectedSection("");
     setCourseYear("");
   };
 
@@ -172,7 +152,7 @@ export default function RegisterScreen({ navigation, route }) {
             />
             <TextInput
               style={styles.input}
-              placeholder="Full Names"
+              placeholder="Full Name"
               value={name}
               onChangeText={setName}
               placeholderTextColor="#999"
@@ -185,28 +165,13 @@ export default function RegisterScreen({ navigation, route }) {
               autoCapitalize="characters"
               placeholderTextColor="#999"
             />
-            <RNPickerSelect
-              value={selectedCourse}
-              onValueChange={(value) => { setSelectedCourse(value); setSelectedSection(""); }}
-              items={courses.map((course) => ({ label: course, value: course }))}
-              placeholder={{ label: 'Select Course', value: null }}
-              style={{
-                placeholder: styles.input,
-                inputIOS: styles.input,
-                inputAndroid: styles.input,
-              }}
-            />
-            <RNPickerSelect
-              value={selectedSection}
-              onValueChange={(value) => setSelectedSection(value)}
-              items={selectedCourse ? courseYearOptions[selectedCourse].map((section) => ({ label: section, value: section })) : []}
-              placeholder={{ label: 'Select Section', value: null }}
-              style={{
-                placeholder: styles.input,
-                inputIOS: styles.input,
-                inputAndroid: styles.input,
-              }}
-              disabled={!selectedCourse}
+            <TextInput
+              style={styles.input}
+              placeholder="Course and Section (e.g. BSCS 3B)"
+              value={courseYear}
+              onChangeText={setCourseYear}
+              autoCapitalize="characters"
+              placeholderTextColor="#999"
             />
 
             <TouchableOpacity style={styles.button} onPress={handleRegister}>
