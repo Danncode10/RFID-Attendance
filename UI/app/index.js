@@ -19,6 +19,33 @@ export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [uid, setUid] = useState("");
   const [courseYear, setCourseYear] = useState("");
+  const [serverOnline, setServerOnline] = useState(null);
+
+  // ✅ Check server connectivity
+  const checkServerStatus = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(`${API_BASE_URL}/`, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      setServerOnline(response.ok);
+    } catch (error) {
+      console.log("Server check failed:", error.message);
+      setServerOnline(false);
+    }
+  };
+
+  // ✅ Check server status on mount and every 30 seconds
+  useEffect(() => {
+    checkServerStatus();
+    const interval = setInterval(checkServerStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // ✅ Validation
   const validateInputs = () => {
@@ -88,6 +115,32 @@ export default function RegisterScreen() {
             keyboardDismissMode="on-drag"
           >
             <Text style={styles.title}>📘 Student Registration</Text>
+
+            {/* Server Status Indicator */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 20,
+              padding: 10,
+              backgroundColor: serverOnline === null ? '#FFF3CD' : serverOnline ? '#D4EDDA' : '#F8D7DA',
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: serverOnline === null ? '#FFEAA7' : serverOnline ? '#C3E6CB' : '#F5C6CB'
+            }}>
+              <Text style={{
+                fontSize: 18,
+                marginRight: 8
+              }}>
+                {serverOnline === null ? '⏳' : serverOnline ? '🟢' : '🔴'}
+              </Text>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: 'bold',
+                color: serverOnline === null ? '#856404' : serverOnline ? '#155724' : '#721C24'
+              }}>
+                {serverOnline === null ? 'Checking server...' : serverOnline ? 'Server Online' : 'Server Offline'}
+              </Text>
+            </View>
 
             <TextInput
               style={styles.input}
