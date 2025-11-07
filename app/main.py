@@ -223,6 +223,40 @@ async def get_events():
     finally:
         conn.close()
 
+@app.delete("/students/{student_id}")
+async def delete_student(student_id: str):
+    """Delete a student by student_id"""
+    conn = get_db()
+    try:
+        # Check if student exists
+        student = conn.execute(
+            "SELECT id, name FROM students WHERE student_id = ?",
+            (student_id,)
+        ).fetchone()
+
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
+
+        # Delete attendance logs first (due to foreign key constraint)
+        conn.execute(
+            "DELETE FROM attendance_logs WHERE student_id = ?",
+            (student['id'],)
+        )
+
+        # Delete the student
+        conn.execute(
+            "DELETE FROM students WHERE student_id = ?",
+            (student_id,)
+        )
+
+        conn.commit()
+        return {"status": "success", "message": f"Student {student['name']} deleted successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.get("/")
 async def root():
     """API root endpoint"""
@@ -233,6 +267,7 @@ async def root():
             "POST /scan - Scan RFID card",
             "POST /register - Register new student",
             "GET /students - Get all students",
+            "DELETE /students/{student_id} - Delete student by student_id",
             "GET /attendance - Get attendance logs",
             "POST /events - Create event",
             "GET /events - Get all events"
