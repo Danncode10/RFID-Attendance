@@ -17,7 +17,8 @@ def init_database():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS students (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                rfid_id TEXT UNIQUE NOT NULL,
+                rfid_id TEXT UNIQUE,
+                student_id TEXT UNIQUE NOT NULL,
                 name TEXT NOT NULL,
                 course_year TEXT NOT NULL
             )
