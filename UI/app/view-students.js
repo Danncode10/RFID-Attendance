@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import styles from "./styles";
 
 const API_BASE_URL = "http://13.214.102.163:8000"; // Replace with your backend URL
@@ -42,12 +44,88 @@ export default function ViewStudentsScreen() {
     }, [])
   );
 
+  const handleUnregister = async (student) => {
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Enter Password',
+        'Please enter the administrator password to unregister this student:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Unregister',
+            onPress: (password) => {
+              if (password === '12345678') {
+                confirmUnregister(student);
+              } else {
+                Alert.alert('Error', 'Incorrect password.');
+              }
+            }
+          }
+        ],
+        'secure-text'
+      );
+    } else {
+      // For Android and other platforms, use a regular alert first
+      Alert.alert(
+        'Enter Password',
+        'Please enter the administrator password to unregister this student:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Enter Password',
+            onPress: () => {
+              // Since Alert.prompt is iOS only, we'll use a simple confirmation for now
+              Alert.alert(
+                'Confirm Unregister',
+                `Are you sure you want to unregister ${student.name}?`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Unregister',
+                    style: 'destructive',
+                    onPress: () => confirmUnregister(student)
+                  }
+                ]
+              );
+            }
+          }
+        ]
+      );
+    }
+  };
+
+  const confirmUnregister = async (student) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/students/${student.student_id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', `${student.name} has been unregistered successfully.`);
+        fetchStudents(); // Refresh the list
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.detail || 'Failed to unregister student.');
+      }
+    } catch (error) {
+      console.error('Error unregistering student:', error);
+      Alert.alert('Error', 'Could not connect to the server. Please check your connection.');
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.tableRow}>
-      <Text style={[styles.tableCell, { flex: 1 }]}>{item.student_id}</Text>
-      <Text style={[styles.tableCell, { flex: 1 }]}>{item.rfid_id}</Text>
-      <Text style={[styles.tableCell, { flex: 2 }]}>{item.name}</Text>
-      <Text style={[styles.tableCell, { flex: 1 }]}>{item.course_year}</Text>
+      <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.student_id}</Text>
+      <Text style={[styles.tableCell, { flex: 2.5 }]}>{item.name}</Text>
+      <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.course_year}</Text>
+      <View style={[styles.tableCell, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+        <TouchableOpacity
+          style={{ padding: 8 }}
+          onPress={() => handleUnregister(item)}
+        >
+          <Ionicons name="trash-outline" size={20} color="#dc3545" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -73,10 +151,10 @@ export default function ViewStudentsScreen() {
       <Text style={styles.listTitle}>📋 Registered Students</Text>
 
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText, { flex: 1 }]}>Student ID</Text>
-        <Text style={[styles.tableHeaderText, { flex: 1 }]}>RFID ID</Text>
-        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Name</Text>
-        <Text style={[styles.tableHeaderText, { flex: 1 }]}>Course & Year</Text>
+        <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Student ID</Text>
+        <Text style={[styles.tableHeaderText, { flex: 2.5 }]}>Name</Text>
+        <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Course & Year</Text>
+        <Text style={[styles.tableHeaderText, { flex: 1 }]}></Text>
       </View>
 
       <FlatList
