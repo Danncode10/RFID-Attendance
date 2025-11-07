@@ -73,6 +73,7 @@ export default function RegisterScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          student_id: studentId.trim(),
           rfid_id: uid.trim().toUpperCase(),
           name: name.trim(),
           course_year: courseYear,
