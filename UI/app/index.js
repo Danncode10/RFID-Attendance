@@ -130,6 +130,13 @@ export default function RegisterScreen() {
             >
               <Text style={styles.buttonText}>View Registered Students</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#FF9800", marginTop: 10 }]}
+              onPress={() => router.push('/events')}
+            >
+              <Text style={styles.buttonText}>Events</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>

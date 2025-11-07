@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
+  TextInput,
   FlatList,
   TouchableOpacity,
   Alert,
@@ -19,6 +20,7 @@ export default function ViewStudentsScreen() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchStudents = async () => {
     try {
@@ -113,6 +115,12 @@ export default function ViewStudentsScreen() {
     }
   };
 
+  // Filter students based on search term (search by name or student ID)
+  const filteredStudents = students.filter(student =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.student_id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const renderItem = ({ item }) => (
     <View style={styles.tableRow}>
       <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.student_id}</Text>
@@ -150,6 +158,17 @@ export default function ViewStudentsScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.listTitle}>📋 Registered Students</Text>
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, paddingHorizontal: 10 }}>
+        <Ionicons name="search" size={20} color="#666" style={{ marginRight: 10 }} />
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Search by name or student ID..."
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholderTextColor="#999"
+        />
+      </View>
+
       <View style={styles.tableHeader}>
         <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Student ID</Text>
         <Text style={[styles.tableHeaderText, { flex: 2.5 }]}>Name</Text>
@@ -158,12 +177,12 @@ export default function ViewStudentsScreen() {
       </View>
 
       <FlatList
-        data={students}
+        data={filteredStudents}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20 }}>
-            No students registered yet.
+            {searchTerm ? "No students found matching your search." : "No students registered yet."}
           </Text>
         }
       />
