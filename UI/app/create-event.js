@@ -37,18 +37,35 @@ export default function CreateEventScreen() {
     }
 
     try {
+      const eventData = {
+        event_name: eventName.trim(),
+        event_date: eventDate.toISOString().split('T')[0], // YYYY-MM-DD
+      };
+
+      console.log("Sending event data:", eventData);
+
       const response = await fetch(`${API_BASE_URL}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          event_name: eventName.trim(),
-          event_date: eventDate.toISOString().split('T')[0], // YYYY-MM-DD
-        }),
+        body: JSON.stringify(eventData),
       });
 
-      const data = await response.json();
+      console.log("Response status:", response.status);
+      console.log("Response headers:", response.headers);
+
+      let data;
+      try {
+        data = await response.json();
+        console.log("Response data:", data);
+      } catch (jsonError) {
+        console.error("Failed to parse JSON response:", jsonError);
+        const text = await response.text();
+        console.log("Response text:", text);
+        Alert.alert("Error", `Server returned invalid response: ${text}`);
+        return;
+      }
 
       if (response.ok) {
         Alert.alert("✅ Success", "Event created successfully!");
@@ -56,11 +73,12 @@ export default function CreateEventScreen() {
         setEventDate(new Date());
         router.back();
       } else {
-        Alert.alert("Creation Failed", data.detail || "An error occurred.");
+        const errorMessage = data.detail || data.message || "An error occurred.";
+        Alert.alert("Creation Failed", errorMessage);
       }
     } catch (error) {
       console.error("Error creating event:", error);
-      Alert.alert("Error", "Could not connect to the server.");
+      Alert.alert("Error", `Could not connect to the server: ${error.message}`);
     }
   };
 

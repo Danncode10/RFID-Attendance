@@ -77,6 +77,10 @@ class AttendanceLogResponse(BaseModel):
     event_id: int
     scan_timestamp: str
 
+class EventCreate(BaseModel):
+    event_name: str
+    event_date: str
+
 @app.post("/scan")
 async def scan_rfid(request: ScanRequest):
     """Scan RFID card and check authorization"""
@@ -196,13 +200,13 @@ async def get_attendance(event_id: Optional[int] = None):
         conn.close()
 
 @app.post("/events")
-async def create_event(event_name: str, event_date: str):
+async def create_event(request: EventCreate):
     """Create a new event"""
     conn = get_db()
     try:
         conn.execute(
             "INSERT INTO events (event_name, event_date) VALUES (?, ?)",
-            (event_name, event_date)
+            (request.event_name, request.event_date)
         )
         event_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         conn.commit()
