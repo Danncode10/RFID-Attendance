@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
+  TextInput,
   FlatList,
   TouchableOpacity,
   Alert,
@@ -19,6 +20,7 @@ export default function EventAttendanceScreen() {
   const [attendanceLogs, setAttendanceLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchAttendance = async () => {
     if (!eventId) return;
@@ -46,22 +48,23 @@ export default function EventAttendanceScreen() {
     }, [eventId])
   );
 
+  // Filter attendance logs based on search term (search by name, student ID, or course/year)
+  const filteredAttendanceLogs = attendanceLogs.filter(log =>
+    log.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.course_year.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const renderItem = ({ item }) => (
-    <View style={styles.attendanceItem}>
-      <View style={styles.attendanceContent}>
-        <Text style={styles.studentName}>{item.name}</Text>
-        <Text style={styles.studentDetails}>{item.course_year}</Text>
-        <Text style={styles.scanTime}>{new Date(item.scan_timestamp).toLocaleString()}</Text>
+    <View style={styles.tableRow}>
+      <Text style={[styles.tableCell, { flex: 1 }]}>{item.student_id}</Text>
+      <Text style={[styles.tableCell, { flex: 2 }]}>{item.name}</Text>
+      <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.course_year}</Text>
+      <View style={[styles.tableCell, { flex: 1.5 }]}>
+        <Text>{new Date(item.scan_timestamp).toLocaleString()}</Text>
         {item.duplicate && (
-          <Text style={styles.duplicateText}>⚠️ Duplicate scan - already recorded today</Text>
+          <Text style={styles.duplicateText}>⚠️ Duplicate</Text>
         )}
-      </View>
-      <View style={[styles.statusIndicator, item.duplicate && styles.duplicateIndicator]}>
-        <Ionicons
-          name={item.duplicate ? "warning" : "checkmark-circle"}
-          size={24}
-          color="#fff"
-        />
       </View>
     </View>
   );
@@ -89,17 +92,44 @@ export default function EventAttendanceScreen() {
         <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
         <Text style={styles.titleText}>{eventName || "Event Attendance"}</Text>
       </View>
+
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: "#007bff", marginBottom: 15 }]}
+        onPress={fetchAttendance}
+      >
+        <Ionicons name="refresh" size={20} color="#fff" />
+        <Text style={styles.buttonTextWithIcon}>Refresh</Text>
+      </TouchableOpacity>
+
       <Text style={styles.attendanceCount}>Total Scans: {attendanceLogs.length}</Text>
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15, paddingHorizontal: 10 }}>
+        <Ionicons name="search" size={20} color="#666" style={{ marginRight: 10 }} />
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Search by name, ID, or section..."
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholderTextColor="#999"
+        />
+      </View>
+
+      <View style={styles.tableHeader}>
+        <Text style={[styles.tableHeaderText, { flex: 1 }]}>ID</Text>
+        <Text style={[styles.tableHeaderText, { flex: 2 }]}>Name</Text>
+        <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Section</Text>
+        <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>Time</Text>
+      </View>
+
       <FlatList
-        data={attendanceLogs}
+        data={filteredAttendanceLogs}
         keyExtractor={(item) => item.log_id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="information-circle-outline" size={50} color="#999" />
             <Text style={styles.emptyText}>
-              No attendance recorded for this event yet.
+              {searchTerm ? "No attendance records found matching your search." : "No attendance recorded for this event yet."}
             </Text>
           </View>
         }
