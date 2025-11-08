@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +20,10 @@ export default function EventsScreen() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editEventName, setEditEventName] = useState('');
+  const [editEventDate, setEditEventDate] = useState('');
 
   const fetchEvents = async () => {
     try {
@@ -43,18 +49,106 @@ export default function EventsScreen() {
     }, [])
   );
 
+  const handleEdit = (event) => {
+    setEditingEvent(event);
+    setEditEventName(event.event_name);
+    setEditEventDate(event.event_date);
+    setEditModalVisible(true);
+  };
+
+  const handleDelete = async (event) => {
+    Alert.alert(
+      "Delete Event",
+      `Are you sure you want to delete "${event.event_name}"? This will also delete all attendance records for this event.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/events/${event.event_id}`, {
+                method: 'DELETE',
+              });
+
+              if (response.ok) {
+                Alert.alert("Success", "Event deleted successfully");
+                fetchEvents(); // Refresh the list
+              } else {
+                const errorData = await response.json();
+                Alert.alert("Error", errorData.detail || "Failed to delete event");
+              }
+            } catch (error) {
+              console.error("Error deleting event:", error);
+              Alert.alert("Error", "Failed to delete event. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editEventName.trim() || !editEventDate.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/events/${editingEvent.event_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: editEventName.trim(),
+          event_date: editEventDate.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        Alert.alert("Success", "Event updated successfully");
+        setEditModalVisible(false);
+        setEditingEvent(null);
+        setEditEventName('');
+        setEditEventDate('');
+        fetchEvents(); // Refresh the list
+      } else {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.detail || "Failed to update event");
+      }
+    } catch (error) {
+      console.error("Error updating event:", error);
+      Alert.alert("Error", "Failed to update event. Please try again.");
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.eventItem}
-      onPress={() => router.push({ pathname: '/event-attendance', params: { eventId: item.event_id, eventName: item.event_name } })}
-    >
-      <View style={styles.eventContent}>
+    <View style={styles.eventItem}>
+      <TouchableOpacity
+        style={styles.eventContent}
+        onPress={() => router.push({ pathname: '/event-attendance', params: { eventId: item.event_id, eventName: item.event_name } })}
+      >
         <Text style={styles.eventName}>{item.event_name}</Text>
         <Text style={styles.eventDate}>{new Date(item.event_date).toLocaleDateString()}</Text>
         <Text style={styles.tapHint}>Tap to view attendance</Text>
+      </TouchableOpacity>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleEdit(item)}
+        >
+          <Ionicons name="pencil" size={20} color="#007bff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleDelete(item)}
+        >
+          <Ionicons name="trash" size={20} color="#ff5252" />
+        </TouchableOpacity>
+        <Ionicons name="chevron-forward" size={24} color="#999" />
       </View>
-      <Ionicons name="chevron-forward" size={24} color="#999" />
-    </TouchableOpacity>
+    </View>
   );
 
   if (loading) {
@@ -102,6 +196,51 @@ export default function EventsScreen() {
           </View>
         }
       />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Event</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Event Name"
+              value={editEventName}
+              onChangeText={setEditEventName}
+              placeholderTextColor="#999"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Event Date (YYYY-MM-DD)"
+              value={editEventDate}
+              onChangeText={setEditEventDate}
+              placeholderTextColor="#999"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#4CAF50" }]}
+                onPress={handleSaveEdit}
+              >
+                <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

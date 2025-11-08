@@ -215,4 +215,45 @@ emptyContainer: {
   justifyContent: "center",
   padding: 20,
 },
+// Action buttons for events
+actionButtons: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingRight: 15,
+},
+actionButton: {
+  padding: 8,
+  marginLeft: 8,
+},
+// Modal styles
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+modalContent: {
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  padding: 20,
+  width: "90%",
+  maxWidth: 400,
+},
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "bold",
+  textAlign: "center",
+  marginBottom: 20,
+  color: "#333",
+},
+modalButtons: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginTop: 20,
+},
+cancelButton: {
+  backgroundColor: "#6c757d",
+  flex: 1,
+  marginRight: 10,
+},
 });
