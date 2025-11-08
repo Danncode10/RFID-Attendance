@@ -126,7 +126,7 @@ export default function EventsScreen() {
   const renderItem = ({ item }) => (
     <View style={styles.eventItem}>
       <TouchableOpacity
-        style={styles.eventContent}
+        style={styles.eventContentTouchable}
         onPress={() => router.push({ pathname: '/event-attendance', params: { eventId: item.event_id, eventName: item.event_name } })}
       >
         <Text style={styles.eventName}>{item.event_name}</Text>

@@ -123,8 +123,10 @@ eventItem: {
   shadowOpacity: 0.1,
   shadowRadius: 3,
   elevation: 3,
+  flexDirection: "row",
+  alignItems: "center",
 },
-eventContent: {
+eventContentTouchable: {
   flex: 1,
 },
 eventName: {
