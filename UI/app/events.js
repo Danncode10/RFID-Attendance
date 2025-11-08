@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,12 +19,21 @@ const API_BASE_URL = "http://13.214.102.163:8000"; // Replace with your backend 
 
 export default function EventsScreen() {
   const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [displayedEvents, setDisplayedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [editEventName, setEditEventName] = useState('');
   const [editEventDate, setEditEventDate] = useState('');
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
+
+  const ITEMS_PER_PAGE = 10; // Load 10 events at a time
 
   const fetchEvents = async () => {
     try {
@@ -33,7 +43,9 @@ export default function EventsScreen() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setEvents(data);
+      // Sort events by event_id in descending order (newest first)
+      const sortedData = data.sort((a, b) => b.event_id - a.event_id);
+      setEvents(sortedData);
     } catch (e) {
       console.error("Error fetching events:", e);
       setError("Failed to load events. Please try again later.");
@@ -43,11 +55,81 @@ export default function EventsScreen() {
     }
   };
 
+  const fetchActiveEvent = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/active-event`);
+      if (response.ok) {
+        const data = await response.json();
+        setActiveEvent(data.active_event);
+      }
+    } catch (error) {
+      console.error("Error fetching active event:", error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchEvents();
+      fetchActiveEvent();
     }, [])
   );
+
+  // Initialize displayed events when data loads
+  useEffect(() => {
+    if (events.length > 0) {
+      const initialLoad = events.slice(0, ITEMS_PER_PAGE);
+      setDisplayedEvents(initialLoad);
+      setHasMoreData(events.length > ITEMS_PER_PAGE);
+    } else {
+      setDisplayedEvents([]);
+      setHasMoreData(false);
+    }
+  }, [events]);
+
+  // Update displayed events when search text changes
+  useEffect(() => {
+    const filtered = events.filter(event =>
+      event.event_name.toLowerCase().includes(searchText.toLowerCase())
+    );
+
+    const initialLoad = filtered.slice(0, ITEMS_PER_PAGE);
+    setDisplayedEvents(initialLoad);
+    setHasMoreData(filtered.length > ITEMS_PER_PAGE);
+  }, [searchText, events]);
+
+  // Pull to refresh function
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchEvents();
+    await fetchActiveEvent();
+    setRefreshing(false);
+  };
+
+  // Load more events (infinite scroll)
+  const loadMoreEvents = () => {
+    if (loadingMore || !hasMoreData) return;
+
+    setLoadingMore(true);
+
+    // Simulate API delay for better UX
+    setTimeout(() => {
+      const filtered = events.filter(event =>
+        event.event_name.toLowerCase().includes(searchText.toLowerCase())
+      );
+
+      const currentLength = displayedEvents.length;
+      const nextBatch = filtered.slice(currentLength, currentLength + ITEMS_PER_PAGE);
+
+      if (nextBatch.length > 0) {
+        setDisplayedEvents(prev => [...prev, ...nextBatch]);
+        setHasMoreData(currentLength + nextBatch.length < filtered.length);
+      } else {
+        setHasMoreData(false);
+      }
+
+      setLoadingMore(false);
+    }, 500);
+  };
 
   const handleEdit = (event) => {
     setEditingEvent(event);
@@ -129,7 +211,19 @@ export default function EventsScreen() {
         style={styles.eventContentTouchable}
         onPress={() => router.push({ pathname: '/event-attendance', params: { eventId: item.event_id, eventName: item.event_name } })}
       >
-        <Text style={styles.eventName}>{item.event_name}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.eventName}>{item.event_name}</Text>
+          {activeEvent && activeEvent.event_id === item.event_id && (
+            <View style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: '#4CAF50',
+              marginLeft: 8,
+              marginTop: 2
+            }} />
+          )}
+        </View>
         <Text style={styles.eventDate}>{new Date(item.event_date).toLocaleDateString()}</Text>
         <Text style={styles.tapHint}>Tap to view attendance</Text>
       </TouchableOpacity>
@@ -183,15 +277,73 @@ export default function EventsScreen() {
         <Text style={styles.buttonTextWithIcon}>Create New Event</Text>
       </TouchableOpacity>
 
+      {/* Search Bar */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 15,
+        borderWidth: 1,
+        borderColor: '#ddd'
+      }}>
+        <Ionicons name="search" size={20} color="#999" style={{ marginRight: 8 }} />
+        <TextInput
+          style={{
+            flex: 1,
+            fontSize: 16,
+            color: '#333',
+            paddingVertical: 0,
+          }}
+          placeholder="Search events..."
+          placeholderTextColor="#999"
+          value={searchText}
+          onChangeText={setSearchText}
+        />
+        {searchText.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchText('')}>
+            <Ionicons name="close-circle" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
-        data={events}
+        data={displayedEvents}
         keyExtractor={(item) => item.event_id.toString()}
         renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#4CAF50']}
+            tintColor="#4CAF50"
+          />
+        }
+        onEndReached={loadMoreEvents}
+        onEndReachedThreshold={0.1}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#4CAF50" />
+              <Text style={{ marginTop: 10, color: '#666' }}>Loading more events...</Text>
+            </View>
+          ) : hasMoreData ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#666' }}>Scroll down to load more</Text>
+            </View>
+          ) : displayedEvents.length > 0 ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#666' }}>No more events to load</Text>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="information-circle-outline" size={50} color="#999" />
             <Text style={styles.emptyText}>
-              No events created yet. Tap "Create New Event" to add one.
+              {searchText.trim() !== '' ? 'No events match your search.' : 'No events created yet. Tap "Create New Event" to add one.'}
             </Text>
           </View>
         }

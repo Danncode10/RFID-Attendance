@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,12 @@ export default function ViewStudentsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [displayedStudents, setDisplayedStudents] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
+
+  const ITEMS_PER_PAGE = 20; // Load 20 students at a time
 
   const fetchStudents = async () => {
     try {
@@ -40,11 +47,69 @@ export default function ViewStudentsScreen() {
     }
   };
 
+  // Initialize displayed students when data loads
+  useEffect(() => {
+    if (students.length > 0) {
+      const initialLoad = students.slice(0, ITEMS_PER_PAGE);
+      setDisplayedStudents(initialLoad);
+      setHasMoreData(students.length > ITEMS_PER_PAGE);
+    } else {
+      setDisplayedStudents([]);
+      setHasMoreData(false);
+    }
+  }, [students]);
+
+  // Update displayed students when search term changes
+  useEffect(() => {
+    const filtered = students.filter(student =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.student_id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const initialLoad = filtered.slice(0, ITEMS_PER_PAGE);
+    setDisplayedStudents(initialLoad);
+    setHasMoreData(filtered.length > ITEMS_PER_PAGE);
+  }, [searchTerm, students]);
+
   useFocusEffect(
     useCallback(() => {
       fetchStudents();
     }, [])
   );
+
+  // Pull to refresh function
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchStudents();
+    setRefreshing(false);
+  };
+
+  // Load more students (infinite scroll)
+  const loadMoreStudents = () => {
+    if (loadingMore || !hasMoreData) return;
+
+    setLoadingMore(true);
+
+    // Simulate API delay for better UX
+    setTimeout(() => {
+      const filtered = students.filter(student =>
+        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.student_id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      const currentLength = displayedStudents.length;
+      const nextBatch = filtered.slice(currentLength, currentLength + ITEMS_PER_PAGE);
+
+      if (nextBatch.length > 0) {
+        setDisplayedStudents(prev => [...prev, ...nextBatch]);
+        setHasMoreData(currentLength + nextBatch.length < filtered.length);
+      } else {
+        setHasMoreData(false);
+      }
+
+      setLoadingMore(false);
+    }, 500);
+  };
 
   const handleUnregister = async (student) => {
     if (Platform.OS === 'ios') {
@@ -177,9 +242,35 @@ export default function ViewStudentsScreen() {
       </View>
 
       <FlatList
-        data={filteredStudents}
+        data={displayedStudents}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007bff']}
+            tintColor="#007bff"
+          />
+        }
+        onEndReached={loadMoreStudents}
+        onEndReachedThreshold={0.1}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#007bff" />
+              <Text style={{ marginTop: 10, color: '#666' }}>Loading more students...</Text>
+            </View>
+          ) : hasMoreData ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#666' }}>Scroll down to load more</Text>
+            </View>
+          ) : displayedStudents.length > 0 ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#666' }}>No more students to load</Text>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <Text style={{ textAlign: "center", marginTop: 20 }}>
             {searchTerm ? "No students found matching your search." : "No students registered yet."}

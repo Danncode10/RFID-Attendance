@@ -338,24 +338,26 @@ export default function RegisterScreen() {
                     </TouchableOpacity>
                   </View>
                   {events.length > 0 ? (
-                    events.map((event) => (
-                      <TouchableOpacity
-                        key={event.event_id}
-                        style={[
-                          styles.eventOption,
-                          activeEvent && activeEvent.event_id === event.event_id && styles.activeEventOption
-                        ]}
-                        onPress={() => handleSetActiveEvent(event.event_id)}
-                      >
-                        <Text style={styles.eventOptionName}>{event.event_name}</Text>
-                        <Text style={styles.eventOptionDate}>
-                          {new Date(event.event_date).toLocaleDateString()}
-                        </Text>
-                        {activeEvent && activeEvent.event_id === event.event_id && (
-                          <Text style={styles.currentActiveText}>✓ Current Active</Text>
-                        )}
-                      </TouchableOpacity>
-                    ))
+                    <ScrollView style={{ maxHeight: 200 }} showsVerticalScrollIndicator={true}>
+                      {[...events].sort((a, b) => b.event_id - a.event_id).map((event) => (
+                        <TouchableOpacity
+                          key={event.event_id}
+                          style={[
+                            styles.eventOption,
+                            activeEvent && activeEvent.event_id === event.event_id && styles.activeEventOption
+                          ]}
+                          onPress={() => handleSetActiveEvent(event.event_id)}
+                        >
+                          <Text style={styles.eventOptionName}>{event.event_name}</Text>
+                          <Text style={styles.eventOptionDate}>
+                            {new Date(event.event_date).toLocaleDateString()}
+                          </Text>
+                          {activeEvent && activeEvent.event_id === event.event_id && (
+                            <Text style={styles.currentActiveText}>✓ Current Active</Text>
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
                   ) : (
                     <Text style={styles.noEventsText}>No events available. Create an event first.</Text>
                   )}
