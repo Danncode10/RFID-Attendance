@@ -215,6 +215,73 @@ Delete an event by ID. This will also delete all associated attendance logs.
   }
   ```
 
+### GET /active-event
+
+Get the currently active event.
+
+- **Method:** GET
+- **Parameters:** None
+- **Success Response (200):**
+  ```json
+  {
+    "active_event": {
+      "event_id": 1,
+      "event_name": "Sample Event",
+      "event_date": "2023-12-01"
+    },
+    "message": "Active event retrieved successfully"
+  }
+  ```
+
+- **Response when no active event (200):**
+  ```json
+  {
+    "active_event": null,
+    "message": "No active event set"
+  }
+  ```
+
+### POST /active-event
+
+Set an event as the active event for RFID scanning.
+
+- **Method:** POST
+- **Parameters (JSON body):**
+  - `event_id` (integer, required): ID of the event to set as active
+
+- **Success Response (200):**
+  ```json
+  {
+    "status": "success",
+    "active_event": {
+      "event_id": 1,
+      "event_name": "Sample Event"
+    },
+    "message": "Event 'Sample Event' set as active"
+  }
+  ```
+
+- **Error Response (404):** Event not found
+  ```json
+  {
+    "detail": "Event not found"
+  }
+  ```
+
+### DELETE /active-event
+
+Clear the active event (no event will be active for scanning).
+
+- **Method:** DELETE
+- **Parameters:** None
+- **Success Response (200):**
+  ```json
+  {
+    "status": "success",
+    "message": "Active event cleared"
+  }
+  ```
+
 ## Interactive Documentation
 
 When the API is running, visit `http://your-ec2-instance:8000/docs` to access the interactive Swagger UI documentation where you can test all endpoints directly in your browser.

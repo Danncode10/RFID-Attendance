@@ -45,6 +45,14 @@ def init_database():
             )
         ''')
 
+        # Create settings table for key-value storage (used for active event)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        ''')
+
         # Insert default event if none exists
         cursor.execute("SELECT COUNT(*) FROM events")
         if cursor.fetchone()[0] == 0:

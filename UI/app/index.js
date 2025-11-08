@@ -20,6 +20,9 @@ export default function RegisterScreen() {
   const [uid, setUid] = useState("");
   const [courseYear, setCourseYear] = useState("");
   const [serverOnline, setServerOnline] = useState(null);
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [showEventSelector, setShowEventSelector] = useState(false);
 
   // ✅ Check server connectivity
   const checkServerStatus = async () => {
@@ -40,10 +43,40 @@ export default function RegisterScreen() {
     }
   };
 
+  // ✅ Fetch active event and events list
+  const fetchActiveEvent = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/active-event`);
+      if (response.ok) {
+        const data = await response.json();
+        setActiveEvent(data.active_event);
+      }
+    } catch (error) {
+      console.error("Error fetching active event:", error);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/events`);
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    }
+  };
+
   // ✅ Check server status on mount and every 30 seconds
   useEffect(() => {
     checkServerStatus();
-    const interval = setInterval(checkServerStatus, 30000); // Check every 30 seconds
+    fetchActiveEvent();
+    fetchEvents();
+    const interval = setInterval(() => {
+      checkServerStatus();
+      fetchActiveEvent();
+    }, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -104,6 +137,64 @@ export default function RegisterScreen() {
     }
   };
 
+  // ✅ Handle setting active event
+  const handleSetActiveEvent = async (eventId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/active-event`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ event_id: eventId }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setActiveEvent(data.active_event);
+        setShowEventSelector(false);
+        Alert.alert("Success", `Event "${data.active_event.event_name}" is now active for scanning!`);
+      } else {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.detail || "Failed to set active event");
+      }
+    } catch (error) {
+      console.error("Error setting active event:", error);
+      Alert.alert("Error", "Could not set active event.");
+    }
+  };
+
+  // ✅ Handle clearing active event
+  const handleClearActiveEvent = async () => {
+    Alert.alert(
+      "Clear Active Event",
+      "Are you sure you want to clear the active event? RFID scans will require explicit event_id.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/active-event`, {
+                method: 'DELETE',
+              });
+
+              if (response.ok) {
+                setActiveEvent(null);
+                Alert.alert("Success", "Active event cleared.");
+              } else {
+                Alert.alert("Error", "Failed to clear active event");
+              }
+            } catch (error) {
+              console.error("Error clearing active event:", error);
+              Alert.alert("Error", "Could not clear active event.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -140,6 +231,75 @@ export default function RegisterScreen() {
               }}>
                 {serverOnline === null ? 'Checking server...' : serverOnline ? 'Server Online' : 'Server Offline'}
               </Text>
+            </View>
+
+            {/* Active Event Section */}
+            <View style={styles.activeEventSection}>
+              <Text style={styles.sectionTitle}>🎯 Active Event for Scanning</Text>
+              <View style={styles.activeEventDisplay}>
+                {activeEvent ? (
+                  <View style={styles.activeEventInfo}>
+                    <Text style={styles.activeEventName}>{activeEvent.event_name}</Text>
+                    <Text style={styles.activeEventDate}>
+                      {new Date(activeEvent.event_date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.activeEventStatus}>🟢 Active - All RFID scans go here</Text>
+                  </View>
+                ) : (
+                  <View style={styles.activeEventInfo}>
+                    <Text style={styles.noActiveEvent}>⚠️ No Active Event</Text>
+                    <Text style={styles.activeEventStatus}>🔴 RFID scans require explicit event_id</Text>
+                  </View>
+                )}
+
+                <View style={styles.activeEventActions}>
+                  <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
+                    onPress={() => setShowEventSelector(!showEventSelector)}
+                  >
+                    <Text style={styles.actionButtonText}>
+                      {activeEvent ? "Change Event" : "Set Active Event"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {activeEvent && (
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: "#ff5252" }]}
+                      onPress={handleClearActiveEvent}
+                    >
+                      <Text style={styles.actionButtonText}>Clear</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {showEventSelector && (
+                <View style={styles.eventSelector}>
+                  <Text style={styles.selectorTitle}>Select Event to Activate:</Text>
+                  {events.length > 0 ? (
+                    events.map((event) => (
+                      <TouchableOpacity
+                        key={event.event_id}
+                        style={[
+                          styles.eventOption,
+                          activeEvent && activeEvent.event_id === event.event_id && styles.activeEventOption
+                        ]}
+                        onPress={() => handleSetActiveEvent(event.event_id)}
+                      >
+                        <Text style={styles.eventOptionName}>{event.event_name}</Text>
+                        <Text style={styles.eventOptionDate}>
+                          {new Date(event.event_date).toLocaleDateString()}
+                        </Text>
+                        {activeEvent && activeEvent.event_id === event.event_id && (
+                          <Text style={styles.currentActiveText}>✓ Current Active</Text>
+                        )}
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={styles.noEventsText}>No events available. Create an event first.</Text>
+                  )}
+                </View>
+              )}
             </View>
 
             <TextInput

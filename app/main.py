@@ -56,7 +56,7 @@ def get_db():
 # Pydantic models
 class ScanRequest(BaseModel):
     uid: str
-    event_id: int = 1
+    event_id: Optional[int] = None
 
 class RegisterRequest(BaseModel):
     student_id: str
@@ -85,11 +85,27 @@ class EventUpdate(BaseModel):
     event_name: Optional[str] = None
     event_date: Optional[str] = None
 
+class ActiveEventSet(BaseModel):
+    event_id: int
+
 @app.post("/scan")
 async def scan_rfid(request: ScanRequest):
     """Scan RFID card and check authorization"""
     conn = get_db()
     try:
+        # Determine which event to use
+        event_id = request.event_id
+        if event_id is None:
+            # Get active event
+            setting = conn.execute(
+                "SELECT value FROM settings WHERE key = 'active_event_id'",
+                ()
+            ).fetchone()
+            if setting:
+                event_id = int(setting['value'])
+            else:
+                raise HTTPException(status_code=400, detail="No active event set. Please set an active event first.")
+
         # Check if student exists
         student = conn.execute(
             "SELECT id, name FROM students WHERE rfid_id = ?",
@@ -100,12 +116,12 @@ async def scan_rfid(request: ScanRequest):
             # Log attendance
             conn.execute(
                 "INSERT INTO attendance_logs (student_id, event_id, scan_timestamp) VALUES (?, ?, ?)",
-                (student['id'], request.event_id, datetime.now().isoformat())
+                (student['id'], event_id, datetime.now().isoformat())
             )
             conn.commit()
             # Broadcast the scanned UID to all connected WebSocket clients
             await manager.broadcast(request.uid)
-            return {"authorized": True, "name": student['name']}
+            return {"authorized": True, "name": student['name'], "event_id": event_id}
         else:
             # Broadcast the scanned UID even if not authorized, so the app can still populate the field
             await manager.broadcast(request.uid)
@@ -311,6 +327,84 @@ async def delete_event(event_id: int):
     finally:
         conn.close()
 
+@app.get("/active-event")
+async def get_active_event():
+    """Get the currently active event"""
+    conn = get_db()
+    try:
+        # Get active event from settings (using a simple key-value approach)
+        setting = conn.execute(
+            "SELECT value FROM settings WHERE key = 'active_event_id'",
+            ()
+        ).fetchone()
+
+        if not setting:
+            return {"active_event": None, "message": "No active event set"}
+
+        active_event_id = int(setting['value'])
+
+        # Get event details
+        event = conn.execute(
+            "SELECT event_id, event_name, event_date FROM events WHERE event_id = ?",
+            (active_event_id,)
+        ).fetchone()
+
+        if not event:
+            # Active event was deleted, clear the setting
+            conn.execute("DELETE FROM settings WHERE key = 'active_event_id'")
+            conn.commit()
+            return {"active_event": None, "message": "Active event no longer exists"}
+
+        return {
+            "active_event": dict(event),
+            "message": "Active event retrieved successfully"
+        }
+    finally:
+        conn.close()
+
+@app.post("/active-event")
+async def set_active_event(request: ActiveEventSet):
+    """Set the active event"""
+    conn = get_db()
+    try:
+        # Check if event exists
+        event = conn.execute(
+            "SELECT event_id, event_name FROM events WHERE event_id = ?",
+            (request.event_id,)
+        ).fetchone()
+
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        # Store active event in settings
+        conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('active_event_id', ?)",
+            (str(request.event_id),)
+        )
+        conn.commit()
+
+        return {
+            "status": "success",
+            "active_event": dict(event),
+            "message": f"Event '{event['event_name']}' set as active"
+        }
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.delete("/active-event")
+async def clear_active_event():
+    """Clear the active event"""
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM settings WHERE key = 'active_event_id'")
+        conn.commit()
+        return {"status": "success", "message": "Active event cleared"}
+    finally:
+        conn.close()
+
 @app.delete("/students/{student_id}")
 async def delete_student(student_id: str):
     """Delete a student by student_id"""
@@ -360,7 +454,10 @@ async def root():
             "POST /events - Create event",
             "GET /events - Get all events",
             "PUT /events/{event_id} - Update event by event_id",
-            "DELETE /events/{event_id} - Delete event by event_id"
+            "DELETE /events/{event_id} - Delete event by event_id",
+            "GET /active-event - Get active event",
+            "POST /active-event - Set active event",
+            "DELETE /active-event - Clear active event"
         ]
     }
 
