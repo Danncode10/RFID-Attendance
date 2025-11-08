@@ -93,18 +93,15 @@ async def scan_rfid(request: ScanRequest):
     """Scan RFID card and check authorization"""
     conn = get_db()
     try:
-        # Determine which event to use
-        event_id = request.event_id
-        if event_id is None:
-            # Get active event
-            setting = conn.execute(
-                "SELECT value FROM settings WHERE key = 'active_event_id'",
-                ()
-            ).fetchone()
-            if setting:
-                event_id = int(setting['value'])
-            else:
-                raise HTTPException(status_code=400, detail="No active event set. Please set an active event first.")
+        # Always use active event (ignore hardware event_id to ensure UI control)
+        setting = conn.execute(
+            "SELECT value FROM settings WHERE key = 'active_event_id'",
+            ()
+        ).fetchone()
+        if setting:
+            event_id = int(setting['value'])
+        else:
+            raise HTTPException(status_code=400, detail="No active event set. Please set an active event first.")
 
         # Check if student exists
         student = conn.execute(
