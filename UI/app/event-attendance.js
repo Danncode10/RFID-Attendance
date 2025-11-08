@@ -52,9 +52,16 @@ export default function EventAttendanceScreen() {
         <Text style={styles.studentName}>{item.name}</Text>
         <Text style={styles.studentDetails}>{item.course_year}</Text>
         <Text style={styles.scanTime}>{new Date(item.scan_timestamp).toLocaleString()}</Text>
+        {item.duplicate && (
+          <Text style={styles.duplicateText}>⚠️ Duplicate scan - already recorded today</Text>
+        )}
       </View>
-      <View style={styles.statusIndicator}>
-        <Ionicons name="checkmark-circle" size={24} color="#fff" />
+      <View style={[styles.statusIndicator, item.duplicate && styles.duplicateIndicator]}>
+        <Ionicons
+          name={item.duplicate ? "warning" : "checkmark-circle"}
+          size={24}
+          color="#fff"
+        />
       </View>
     </View>
   );

@@ -43,11 +43,31 @@ Receive RFID UID from ESP32, check if student exists, and log attendance if auth
   - `uid` (string, required): RFID UID
   - `event_id` (integer, optional): Event ID for the scan (defaults to 1)
 
-- **Success Response (200):**
+- **Success Response (200) - First scan today:**
   ```json
   {
     "authorized": true,
-    "name": "John Doe"
+    "name": "John Doe",
+    "event_id": 1,
+    "duplicate": false
+  }
+  ```
+
+- **Success Response (200) - Already scanned today:**
+  ```json
+  {
+    "authorized": true,
+    "name": "John Doe",
+    "event_id": 1,
+    "message": "Already scanned for this event today",
+    "duplicate": true
+  }
+  ```
+
+- **Error Response (400) - No active event:**
+  ```json
+  {
+    "detail": "No active event set. Please set an active event first."
   }
   ```
 

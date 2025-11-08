@@ -113,7 +113,25 @@ async def scan_rfid(request: ScanRequest):
         ).fetchone()
 
         if student:
-            # Log attendance
+            # Check if student already scanned for this event today
+            today = datetime.now().strftime("%Y-%m-%d")
+            existing_scan = conn.execute(
+                "SELECT log_id FROM attendance_logs WHERE student_id = ? AND event_id = ? AND DATE(scan_timestamp) = ?",
+                (student['id'], event_id, today)
+            ).fetchone()
+
+            if existing_scan:
+                # Already scanned today - don't log again but still broadcast
+                await manager.broadcast(request.uid)
+                return {
+                    "authorized": True,
+                    "name": student['name'],
+                    "event_id": event_id,
+                    "message": "Already scanned for this event today",
+                    "duplicate": True
+                }
+
+            # Log attendance for first scan today
             conn.execute(
                 "INSERT INTO attendance_logs (student_id, event_id, scan_timestamp) VALUES (?, ?, ?)",
                 (student['id'], event_id, datetime.now().isoformat())
@@ -121,7 +139,7 @@ async def scan_rfid(request: ScanRequest):
             conn.commit()
             # Broadcast the scanned UID to all connected WebSocket clients
             await manager.broadcast(request.uid)
-            return {"authorized": True, "name": student['name'], "event_id": event_id}
+            return {"authorized": True, "name": student['name'], "event_id": event_id, "duplicate": False}
         else:
             # Broadcast the scanned UID even if not authorized, so the app can still populate the field
             await manager.broadcast(request.uid)
@@ -196,7 +214,14 @@ async def get_attendance(event_id: Optional[int] = None):
     try:
         if event_id:
             logs = conn.execute(
-                """SELECT al.*, s.name, s.course_year, e.event_name
+                """SELECT al.*, s.name, s.course_year, e.event_name,
+                          CASE WHEN al.scan_timestamp = (
+                              SELECT MIN(al2.scan_timestamp)
+                              FROM attendance_logs al2
+                              WHERE al2.student_id = al.student_id
+                              AND al2.event_id = al.event_id
+                              AND DATE(al2.scan_timestamp) = DATE(al.scan_timestamp)
+                          ) THEN 0 ELSE 1 END as duplicate
                    FROM attendance_logs al
                    JOIN students s ON al.student_id = s.id
                    JOIN events e ON al.event_id = e.event_id
@@ -206,7 +231,14 @@ async def get_attendance(event_id: Optional[int] = None):
             ).fetchall()
         else:
             logs = conn.execute(
-                """SELECT al.*, s.name, s.course_year, e.event_name
+                """SELECT al.*, s.name, s.course_year, e.event_name,
+                          CASE WHEN al.scan_timestamp = (
+                              SELECT MIN(al2.scan_timestamp)
+                              FROM attendance_logs al2
+                              WHERE al2.student_id = al.student_id
+                              AND al2.event_id = al.event_id
+                              AND DATE(al2.scan_timestamp) = DATE(al.scan_timestamp)
+                          ) THEN 0 ELSE 1 END as duplicate
                    FROM attendance_logs al
                    JOIN students s ON al.student_id = s.id
                    JOIN events e ON al.event_id = e.event_id
@@ -215,7 +247,14 @@ async def get_attendance(event_id: Optional[int] = None):
                 ()
             ).fetchall()
 
-        return [dict(log) for log in logs]
+        # Convert to list of dicts and ensure duplicate is boolean
+        result = []
+        for log in logs:
+            log_dict = dict(log)
+            log_dict['duplicate'] = bool(log_dict['duplicate'])
+            result.append(log_dict)
+
+        return result
     finally:
         conn.close()
 

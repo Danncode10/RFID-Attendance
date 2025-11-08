@@ -128,6 +128,7 @@ eventItem: {
 },
 eventContentTouchable: {
   flex: 1,
+  paddingRight: 10,
 },
 eventName: {
   fontSize: 18,
@@ -207,10 +208,19 @@ statusIndicator: {
   alignItems: "center",
   marginLeft: 15,
 },
+duplicateIndicator: {
+  backgroundColor: "#FF9800", // Orange for duplicates
+},
 statusText: {
   color: "#fff",
   fontSize: 18,
   fontWeight: "bold",
+},
+duplicateText: {
+  fontSize: 12,
+  color: "#FF9800",
+  fontStyle: "italic",
+  marginTop: 2,
 },
 emptyContainer: {
   alignItems: "center",
@@ -221,9 +231,11 @@ emptyContainer: {
 actionButtons: {
   flexDirection: "row",
   alignItems: "center",
+  justifyContent: "flex-end",
+  width: 100, // Fixed width for action buttons
   paddingRight: 15,
 },
-actionButton: {
+eventActionButton: {
   padding: 8,
   marginLeft: 8,
 },

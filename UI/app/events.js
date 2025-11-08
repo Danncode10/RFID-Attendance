@@ -135,13 +135,13 @@ export default function EventsScreen() {
       </TouchableOpacity>
       <View style={styles.actionButtons}>
         <TouchableOpacity
-          style={styles.actionButton}
+          style={styles.eventActionButton}
           onPress={() => handleEdit(item)}
         >
           <Ionicons name="pencil" size={20} color="#007bff" />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.actionButton}
+          style={styles.eventActionButton}
           onPress={() => handleDelete(item)}
         >
           <Ionicons name="trash" size={20} color="#ff5252" />
