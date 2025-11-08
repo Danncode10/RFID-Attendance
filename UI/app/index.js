@@ -23,6 +23,7 @@ export default function RegisterScreen() {
   const [activeEvent, setActiveEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const [showEventSelector, setShowEventSelector] = useState(false);
+  const [eventsLoaded, setEventsLoaded] = useState(false);
 
   // ✅ Check server connectivity
   const checkServerStatus = async () => {
@@ -255,7 +256,10 @@ export default function RegisterScreen() {
                 <View style={styles.activeEventActions}>
                   <TouchableOpacity
                     style={[styles.actionButton, { backgroundColor: "#4CAF50" }]}
-                    onPress={() => setShowEventSelector(!showEventSelector)}
+                    onPress={() => {
+                      fetchEvents(); // Refresh events list
+                      setShowEventSelector(!showEventSelector);
+                    }}
                   >
                     <Text style={styles.actionButtonText}>
                       {activeEvent ? "Change Event" : "Set Active Event"}
@@ -275,7 +279,15 @@ export default function RegisterScreen() {
 
               {showEventSelector && (
                 <View style={styles.eventSelector}>
-                  <Text style={styles.selectorTitle}>Select Event to Activate:</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <Text style={styles.selectorTitle}>Select Event to Activate:</Text>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: "#2196F3", paddingHorizontal: 12, paddingVertical: 6 }]}
+                      onPress={fetchEvents}
+                    >
+                      <Text style={[styles.actionButtonText, { fontSize: 12 }]}>Refresh</Text>
+                    </TouchableOpacity>
+                  </View>
                   {events.length > 0 ? (
                     events.map((event) => (
                       <TouchableOpacity

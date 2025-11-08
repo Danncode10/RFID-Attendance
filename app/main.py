@@ -148,7 +148,6 @@ async def scan_rfid(request: ScanRequest):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
-        conn.close()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
