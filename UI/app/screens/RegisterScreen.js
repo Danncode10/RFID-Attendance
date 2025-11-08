@@ -8,6 +8,8 @@ import {
   Keyboard,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import styles from "../styles";
 
@@ -105,7 +107,11 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior="position"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.container, { padding: 0 }]}>
           <ScrollView
@@ -160,6 +166,6 @@ export default function RegisterScreen({ navigation }) {
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -234,6 +234,55 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
+            <TextInput
+              style={styles.input}
+              placeholder="Student ID (e.g. 231-1234)"
+              value={studentId}
+              onChangeText={setStudentId}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Full Names"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="RFID UID (e.g. 56EEC2B8)"
+              value={uid}
+              onChangeText={setUid}
+              autoCapitalize="characters"
+              placeholderTextColor="#999"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Course and Section (e.g. BSCS 3B)"
+              value={courseYear}
+              onChangeText={setCourseYear}
+              autoCapitalize="characters"
+              placeholderTextColor="#999"
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleRegister}>
+              <Text style={styles.buttonText}>Register</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
+              onPress={() => router.push('/view-students')}
+            >
+              <Text style={styles.buttonText}>View Registered Students</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#FF9800", marginTop: 10 }]}
+              onPress={() => router.push('/events')}
+            >
+              <Text style={styles.buttonText}>Events</Text>
+            </TouchableOpacity>
+
             {/* Active Event Section */}
             <View style={styles.activeEventSection}>
               <Text style={styles.sectionTitle}>🎯 Active Event for Scanning</Text>
@@ -313,55 +362,6 @@ export default function RegisterScreen() {
                 </View>
               )}
             </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Student ID (e.g. 231-1234)"
-              value={studentId}
-              onChangeText={setStudentId}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Names"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="RFID UID (e.g. 56EEC2B8)"
-              value={uid}
-              onChangeText={setUid}
-              autoCapitalize="characters"
-              placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Course and Section (e.g. BSCS 3B)"
-              value={courseYear}
-              onChangeText={setCourseYear}
-              autoCapitalize="characters"
-              placeholderTextColor="#999"
-            />
-
-            <TouchableOpacity style={styles.button} onPress={handleRegister}>
-              <Text style={styles.buttonText}>Register</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#2196F3", marginTop: 10 }]}
-              onPress={() => router.push('/view-students')}
-            >
-              <Text style={styles.buttonText}>View Registered Students</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "#FF9800", marginTop: 10 }]}
-              onPress={() => router.push('/events')}
-            >
-              <Text style={styles.buttonText}>Events</Text>
-            </TouchableOpacity>
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
