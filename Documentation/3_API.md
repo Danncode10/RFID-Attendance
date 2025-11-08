@@ -20,14 +20,17 @@ Root endpoint providing API information.
   {
     "message": "RFID Attendance API running on AWS EC2",
     "version": "1.0.0",
-    "endpoints": [
-      "POST /scan - Scan RFID card",
-      "POST /register - Register new student",
-      "GET /students - Get all students",
-      "GET /attendance - Get attendance logs",
-      "POST /events - Create event",
-      "GET /events - Get all events"
-    ]
+  "endpoints": [
+    "POST /scan - Scan RFID card",
+    "POST /register - Register new student",
+    "GET /students - Get all students",
+    "DELETE /students/{student_id} - Delete student by student_id",
+    "GET /attendance - Get attendance logs",
+    "POST /events - Create event",
+    "GET /events - Get all events",
+    "PUT /events/{event_id} - Update event by event_id",
+    "DELETE /events/{event_id} - Delete event by event_id"
+  ]
   }
   ```
 
@@ -155,6 +158,61 @@ Retrieve list of all events.
       "event_date": "2023-10-28"
     }
   ]
+  ```
+
+### PUT /events/{event_id}
+
+Update an existing event.
+
+- **Method:** PUT
+- **Parameters:**
+  - `event_id` (integer, required): Event ID in URL path
+  - `event_name` (string, optional): New event name
+  - `event_date` (string, optional): New event date in YYYY-MM-DD format
+
+- **Success Response (200):**
+  ```json
+  {
+    "status": "success",
+    "message": "Event updated successfully"
+  }
+  ```
+
+- **Error Response (404):** Event not found
+  ```json
+  {
+    "detail": "Event not found"
+  }
+  ```
+
+- **Error Response (400):** No fields to update
+  ```json
+  {
+    "detail": "No fields to update"
+  }
+  ```
+
+### DELETE /events/{event_id}
+
+Delete an event by ID. This will also delete all associated attendance logs.
+
+- **Method:** DELETE
+- **Parameters:**
+  - `event_id` (integer, required): Event ID in URL path
+
+- **Success Response (200):**
+  ```json
+  {
+    "status": "success",
+    "message": "Event 'Event Name' deleted successfully"
+  }
+  ```
+
+- **Error Response (404):** Event not found
+  ```json
+  {
+    "detail": "Event not found"
+  }
   ```
 
 ## Interactive Documentation

@@ -81,6 +81,10 @@ class EventCreate(BaseModel):
     event_name: str
     event_date: str
 
+class EventUpdate(BaseModel):
+    event_name: Optional[str] = None
+    event_date: Optional[str] = None
+
 @app.post("/scan")
 async def scan_rfid(request: ScanRequest):
     """Scan RFID card and check authorization"""
@@ -227,6 +231,86 @@ async def get_events():
     finally:
         conn.close()
 
+@app.put("/events/{event_id}")
+async def update_event(event_id: int, request: EventUpdate):
+    """Update an existing event"""
+    conn = get_db()
+    try:
+        # Check if event exists
+        event = conn.execute(
+            "SELECT event_id, event_name, event_date FROM events WHERE event_id = ?",
+            (event_id,)
+        ).fetchone()
+
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        # Build update query dynamically based on provided fields
+        update_fields = []
+        values = []
+
+        if request.event_name is not None:
+            update_fields.append("event_name = ?")
+            values.append(request.event_name)
+
+        if request.event_date is not None:
+            update_fields.append("event_date = ?")
+            values.append(request.event_date)
+
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # Add event_id to values for WHERE clause
+        values.append(event_id)
+
+        # Execute update
+        conn.execute(
+            f"UPDATE events SET {', '.join(update_fields)} WHERE event_id = ?",
+            values
+        )
+        conn.commit()
+
+        return {"status": "success", "message": "Event updated successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.delete("/events/{event_id}")
+async def delete_event(event_id: int):
+    """Delete an event by event_id"""
+    conn = get_db()
+    try:
+        # Check if event exists
+        event = conn.execute(
+            "SELECT event_id, event_name FROM events WHERE event_id = ?",
+            (event_id,)
+        ).fetchone()
+
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        # Delete attendance logs first (due to foreign key constraint)
+        conn.execute(
+            "DELETE FROM attendance_logs WHERE event_id = ?",
+            (event_id,)
+        )
+
+        # Delete the event
+        conn.execute(
+            "DELETE FROM events WHERE event_id = ?",
+            (event_id,)
+        )
+
+        conn.commit()
+        return {"status": "success", "message": f"Event '{event['event_name']}' deleted successfully"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.delete("/students/{student_id}")
 async def delete_student(student_id: str):
     """Delete a student by student_id"""
@@ -274,7 +358,9 @@ async def root():
             "DELETE /students/{student_id} - Delete student by student_id",
             "GET /attendance - Get attendance logs",
             "POST /events - Create event",
-            "GET /events - Get all events"
+            "GET /events - Get all events",
+            "PUT /events/{event_id} - Update event by event_id",
+            "DELETE /events/{event_id} - Delete event by event_id"
         ]
     }
 
