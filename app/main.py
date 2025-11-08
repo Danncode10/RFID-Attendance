@@ -117,21 +117,29 @@ async def scan_rfid(request: ScanRequest):
                 (student['id'], event_id, today)
             ).fetchone()
 
+            current_time = datetime.now(timezone.utc).isoformat()
+
             if existing_scan:
-                # Already scanned today - don't log again but still broadcast
+                # Already scanned today - update with latest timestamp
+                conn.execute(
+                    "UPDATE attendance_logs SET scan_timestamp = ? WHERE log_id = ?",
+                    (current_time, existing_scan['log_id'])
+                )
+                conn.commit()
+                # Broadcast the scanned UID to all connected WebSocket clients
                 await manager.broadcast(request.uid)
                 return {
                     "authorized": True,
                     "name": student['name'],
                     "event_id": event_id,
-                    "message": "Already scanned for this event today",
+                    "message": "Attendance time updated",
                     "duplicate": True
                 }
 
             # Log attendance for first scan today
             conn.execute(
                 "INSERT INTO attendance_logs (student_id, event_id, scan_timestamp) VALUES (?, ?, ?)",
-                (student['id'], event_id, datetime.now(timezone.utc).isoformat())
+                (student['id'], event_id, current_time)
             )
             conn.commit()
             # Broadcast the scanned UID to all connected WebSocket clients
