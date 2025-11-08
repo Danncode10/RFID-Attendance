@@ -11,13 +11,14 @@ import {
   Platform,
   RefreshControl,
 } from "react-native";
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import styles from "./styles";
 
 const API_BASE_URL = "http://13.214.102.163:8000"; // Replace with your backend URL
 
 export default function ViewStudentsScreen() {
+  const router = useRouter();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -188,9 +189,14 @@ export default function ViewStudentsScreen() {
 
   const renderItem = ({ item }) => (
     <View style={styles.tableRow}>
-      <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.student_id}</Text>
-      <Text style={[styles.tableCell, { flex: 2.5 }]}>{item.name}</Text>
-      <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.course_year}</Text>
+      <TouchableOpacity
+        style={{ flex: 6, flexDirection: 'row', alignItems: 'center' }}
+        onPress={() => router.push({ pathname: '/student-attendance', params: { student: JSON.stringify(item) } })}
+      >
+        <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.student_id}</Text>
+        <Text style={[styles.tableCell, { flex: 2.5 }]}>{item.name}</Text>
+        <Text style={[styles.tableCell, { flex: 1.5 }]}>{item.course_year}</Text>
+      </TouchableOpacity>
       <View style={[styles.tableCell, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
         <TouchableOpacity
           style={{ padding: 8 }}

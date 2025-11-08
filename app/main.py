@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 app = FastAPI(title="RFID Attendance API", version="1.0.0")
@@ -131,7 +131,7 @@ async def scan_rfid(request: ScanRequest):
             # Log attendance for first scan today
             conn.execute(
                 "INSERT INTO attendance_logs (student_id, event_id, scan_timestamp) VALUES (?, ?, ?)",
-                (student['id'], event_id, datetime.now().isoformat())
+                (student['id'], event_id, datetime.now(timezone.utc).isoformat())
             )
             conn.commit()
             # Broadcast the scanned UID to all connected WebSocket clients
