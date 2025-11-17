@@ -5,13 +5,13 @@
 #define ESP32_CONFIG_H
 
 // WiFi Configuration
-// const char* WIFI_SSID = "Helping the poor is my PASSION";          // Replace with your WiFi SSID
-// const char* WIFI_PASSWORD = "lefeiram";  // Replace with your WiFi password
-// Note: It cant read 5Ghz Wifi, use 2.4Ghz
+const char* WIFI_SSID = "Helping the poor is my PASSION";          // Replace with your WiFi SSID
+const char* WIFI_PASSWORD = "lefeiram";  // Replace with your WiFi password
+// Note: It cant read 5Ghz Wifi, use 2.4Ghz. Also Iphone hotspot cant read by esp32
 
-// Home Wifi
-const char* WIFI_SSID = "HUAWEI-2.4G-f8Yq";          // Replace with your WiFi SSID
-const char* WIFI_PASSWORD = "CccTn8z4";  // Replace with your WiFi password
+// Dann Hotspot
+// const char* WIFI_SSID = "";          // Replace with your WiFi SSID
+// const char* WIFI_PASSWORD = "";  // Replace with your WiFi password
 
 // WiFi connection timeout (in attempts, each 500ms)
 const int WIFI_CONNECT_ATTEMPTS = 20;  // 10 seconds total
